@@ -6,7 +6,7 @@ contract EmogramCollectible is ERC721 {
 
     uint256 public tokenCounter;
 
-    constructor() public ERC721 ("Emograms", "EMO") {
+    constructor() public ERC721 ("EmogramsTEST", "EMT") {
         tokenCounter = 0;
     }
 
