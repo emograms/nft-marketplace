@@ -25,6 +25,10 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         _tokenIdCounter.increment();
     }
 
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://ipfs.io/";
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 tokenId)
         internal
         override(ERC721, ERC721Enumerable)
@@ -45,6 +49,24 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         return super.tokenURI(tokenId);
     }
 
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) 
+    public {
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721: transfer caller is not owner nor approved"
+        );
+        _setTokenURI(tokenId, _tokenURI);
+    }
+
+    function createEmogramCollection(address to, string memory _tokenURI) 
+    internal {
+        uint256 _tokenID = _tokenIdCounter.current();
+        safeMint(to);
+        setTokenURI(_tokenIdCounter.current(), _tokenURI);
+        _tokenIdCounter.increment();
+
+    }
+    
     function supportsInterface(bytes4 interfaceId)
         public
         view

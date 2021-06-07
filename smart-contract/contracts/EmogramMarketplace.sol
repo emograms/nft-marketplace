@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./EmogramCollectible.sol";
 
-contract EmogramMarketplace {
+contract EmogramMarketplace{
 
 address[] private ownerAddresses;
 string[] public emogramIDs;
