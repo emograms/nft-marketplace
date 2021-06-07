@@ -7,7 +7,7 @@ contract EmogramMarketplace{
 
 address[] private ownerAddresses;
 string[] public emogramIDs;
-enum emogramForSaleState {ON_AUCTION, ON_SALE, NOT_FOR_SALE}
+enum emogramForSaleState {ON_AUCTION, ON_SALE, NOT_FOR_SALE, ON_HODL}
 mapping(address => int8) private royaltyPercentages;
 
 struct Emogram {
