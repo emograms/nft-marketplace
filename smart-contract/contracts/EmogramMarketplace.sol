@@ -96,18 +96,18 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     //TODO: Events
     function putEmogramForSale(uint _tokenId, uint _minPrice, uint _auctionTime, bool _isAuction) public {
         require(ownerOf(_tokenId) == msg.sender);
-        require(emosOnSale[_tokenId].saleState == "NOT_FOR_SALE");
+        require(emosOnSale[_tokenId].saleState == emogramForSaleState.NOT_FOR_SALE);
 
-        emonsOnSlae[_tokenId].tokenID = _tokenId;
+        emosOnSale[_tokenId].tokenID = _tokenId;
         emosOnSale[_tokenId].minPrice = _minPrice;
         emosOnSale[_tokenId].seller = msg.sender;
         emosOnSale[_tokenId].auctionTime = _auctionTime;
         
         if(_isAuction) {
-            emosOnSale[_tokenId].saleState = "ON_AUCTION";
+            emosOnSale[_tokenId].saleState = emogramForSaleState.ON_AUCTION;
         }
         else {
-            emosOnSale[_tokenId].saleState = "ON_SALE";
+            emosOnSale[_tokenId].saleState = emogramForSaleState.ON_SALE;
         }
 
     }
@@ -115,23 +115,23 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     //TODO: Events
     //TODO: Check if the auction period is still ongoing before changing the bid
     function placeBidOnEmogram(uint _tokenId) public payable {
-        require(emosOnSale[_tokenId].saleState == "ON_AUCTION" || emosOnSale[_tokenId].saleState == "ON_SALE");
+        require(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION || emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE);
         require(msg.value >= emosOnSale[_tokenId].minPrice);
 
-        if(emosOnSale[_tokenId].saleState == "ON_SALE") {
-            _balanceOf[emosOnSale[_tokenId].seller]--;
-            _balanceOf[msg.sender]++;
+        if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE) {
+            balanceOf[emosOnSale[_tokenId].seller]--;
+            balanceOf[msg.sender]++;
             _safeTransfer(emosOnSale[_tokenId].seller, msg.sender, _tokenId);
             emosOnSale[_tokenId].seller.transfer(msg.value * (1 - royalty));
         }
 
-        if(emosOnSale[_tokenId].saleState == "ON_AUCTION") {
+        if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION) {
             if(emogramBids[_tokenId].minPrice < msg.value) {
-                emogramBids[_tokenId].bidder.transfer(emogramBids[_tokeId].minPrice);
+                emogramBids[_tokenId].bidder.transfer(emogramBids[_tokenId].minPrice);
                 emogramBids[_tokenId] = Bid(_tokenId, msg.value, msg.sender);
             }
             else {
-                throw;
+                revert();
             }
         }
     }
