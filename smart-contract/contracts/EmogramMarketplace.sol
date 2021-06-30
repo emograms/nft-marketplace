@@ -20,7 +20,7 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     enum emogramForSaleState {ON_AUCTION, ON_SALE, NOT_FOR_SALE}
 
     //Royalty percentages for the creators
-    uint8 private constant royalty = 0.1;
+    uint8 private constant royalty = 1;
     mapping(address => int8) private royaltyPercentages;
 
 
@@ -98,10 +98,9 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         require(ownerOf(_tokenId) == msg.sender);
         require(emosOnSale[_tokenId].saleState == emogramForSaleState.NOT_FOR_SALE);
 
-        emosOnSale[_tokenId].tokenID = _tokenId;
-        emosOnSale[_tokenId].minPrice = _minPrice;
+        emosOnSale[_tokenId] = Offer(_tokenId, _minPrice);
         emosOnSale[_tokenId].seller = msg.sender;
-        emosOnSale[_tokenId].auctionTime = _auctionTime;
+        emosOnSale[_tokenId].auctionTime = block.number + _auctionTime;
         
         if(_isAuction) {
             emosOnSale[_tokenId].saleState = emogramForSaleState.ON_AUCTION;
@@ -117,12 +116,14 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     function placeBidOnEmogram(uint _tokenId) public payable {
         require(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION || emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE);
         require(msg.value >= emosOnSale[_tokenId].minPrice);
+        require(emosOnSale[_tokenId].auctionTime <= block.number);
 
         if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE) {
             balanceOf[emosOnSale[_tokenId].seller]--;
             balanceOf[msg.sender]++;
             _safeTransfer(emosOnSale[_tokenId].seller, msg.sender, _tokenId);
             emosOnSale[_tokenId].seller.transfer(msg.value * (1 - royalty));
+            emosOnSale[_tokenId].saleState = emogramForSaleState.NOT_FOR_SALE;
         }
 
         if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION) {
@@ -144,7 +145,5 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         {
             return super.supportsInterface(interfaceId);
         }
-
-    
 
 }
