@@ -1,8 +1,21 @@
 pragma solidity ^0.8.0;
 
 
+/* TODO:
+
+    assign semi-random position of imp in storage
+    to avoid collisions
+
+ */
+
 contract MarketPlaceProxy {
 
+    /* 
+    owner -> the owner of the contract (admin)
+    isInitialized -> we use initializer instead of constructor, this needed to make sure
+    the function does not run twice
+    imp -> the address of the logic contract
+    */
     address internal owner;
     bool private isInitialized;
     address internal imp;
