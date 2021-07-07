@@ -14,12 +14,12 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     Counters.Counter private _tokenIdCounter;
 
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {
+    constructor(string memory name, string memory symbol) ERC721("EMOGRAMS", "EMG") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
     }
 
-    function safeMint(address to) public {
+    function createCollectible(address to) public {
         require(hasRole(MINTER_ROLE, msg.sender));
         _safeMint(to, _tokenIdCounter.current());
         _tokenIdCounter.increment();
@@ -58,13 +58,20 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         _setTokenURI(tokenId, _tokenURI);
     }
 
-    function createEmogramCollection(address to, string memory _tokenURI) 
-    internal {
-        uint256 _tokenID = _tokenIdCounter.current();
-        safeMint(to);
-        setTokenURI(_tokenIdCounter.current(), _tokenURI);
-        _tokenIdCounter.increment();
+    function mintAllEmograms(address _rec, string[] memory _tokenURIs) public returns (uint) {
+        require(hasRole(MINTER_ROLE, msg.sender));
 
+        for(uint i=0; _tokenURIs.length; i++) {
+            _safeMint(_rec, _tokenIdCounter.current());
+            _setTokenURI(_tokenIdCounter.current(), _tokenURIs[i]);
+            _tokenIdCounter.increment();
+        }
+
+        if(_balanceOf(_rec) != _tokenURIs.length) {
+            revert();
+        }
+
+        return _balanceOf(_rec);
     }
     
     function supportsInterface(bytes4 interfaceId)

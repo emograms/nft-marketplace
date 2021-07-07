@@ -16,8 +16,8 @@ contract MarketPlaceProxy {
     the function does not run twice
     imp -> the address of the logic contract
     */
-    address internal owner;
-    bool private isInitialized;
+    address private owner;
+    bool internal isInitialized;
     address internal imp;
 
 
@@ -39,7 +39,7 @@ contract MarketPlaceProxy {
 
     // function to upgrade the logic contract's address
     function upgradeTo(address) onlyOwner {
-        _imp = address;
+        imp = address;
     }
 
 
