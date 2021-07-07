@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
         -Making sure the implementation can handle ERC-721 tokens correctly
         -Royalty mechanism by eip-2981
         -Events
+        -szobor redeem
  */
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721.sol";
