@@ -14,6 +14,8 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     Counters.Counter private _tokenIdCounter;
 
+    event MintAll(address indexed _to, uint indexed numb);
+
     constructor(string memory name, string memory symbol) ERC721("EMOGRAMS", "EMG") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
@@ -71,6 +73,7 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
             revert();
         }
 
+        emit MintAll(_rec, _tokenURIs.length);
         return _balanceOf(_rec);
     }
     
