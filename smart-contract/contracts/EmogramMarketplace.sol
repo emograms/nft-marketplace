@@ -1,49 +1,59 @@
 pragma solidity ^0.8.0;
 
+/*
+    TODO:
+        -Implementing saleID, auctionID as a changeable unique Counter.counters
+        -Making sure the implementation can handle ERC-721 tokens correctly
+        -Royalty mechanism by eip-2981
+        -Events
+ */
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721Holder.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721Receiver.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Burnable, AccessControl {
+contract EmogramMarketplace is IERC721Receiver, ERC165, ERC721Holder {
     using Counters for Counters.Counter;
 
     address[] private ownerAddresses;
     string[] public emogramIDs;
-
-    //If ON_AUCTION then isForSale = true, and isFixedPrice = false
-    //If ON_SALE then isForSale = true, and isFixedPrice = true
-    //If NOT_FOR_SALE then isForSale = false, and isFixedPrice = false
-    enum emogramForSaleState {ON_AUCTION, ON_SALE, NOT_FOR_SALE}
 
     //Royalty percentages for the creators
     uint8 private constant royalty = 1;
     mapping(address => int8) private royaltyPercentages;
 
 
-    struct Offer {
-    uint tokenID;
-    uint minPrice; // IF ON_SALE, then minPrice is the fixed sell price, otherwise the starting price of the auction
-    emogramForSaleState saleState;
-    uint auctionTime;
-    address onlySellTo;
-    address payable seller;
+    struct Auction {
+        uint _auctionID;
+        Counters.Counter _tokenID;
+        uint _minPrice;
+        uint _auctionTime;
+        address payable _seller;
     }
 
     struct Bid {
-        uint tokenID;
-        uint amount; // If ON_AUCTION, then amount is the bid amount, if it is ON_SALE, then the price
+        Counters.Counter _tokenID;
+        uint auctionID;
+        uint amount;
         address bidder;
     }
 
-    //A list of the Emograms currently on sale, or on auction
-    mapping (uint => Offer) public emosOnSale;
+    struct Offer {
+        Counters.Counter _tokenID;
+        uint saleID;
+        uint price;
+        address payable seller;
+    }
 
-    //A list of Bids on emograms
-    mapping (uint => Bid) public emogramBids;
+    mapping(uint => Bid) auctionIDToBids;
+    mapping(uint => Offer) currentOffers;
+    mapping(uint => Auction) currentAuctions;
+
+    event EmogramOffered(uint indexed _tokenID, address indexed seller, uint price);
+    event EmogramOnAuction(uint indexed _tokenID, address indexed seller, uint indexed auctionID, uint price, uint time);
+
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     Counters.Counter private _tokenIdCounter;
@@ -51,99 +61,26 @@ contract EmogramMarketplace is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
     //Set up the msg.sender as the only admin and minter
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
+        _registerInterface(IERC721Receiver.onERC721Received.selector);
     }
 
-    function safeMint(address to) public {
-        require(hasRole(MINTER_ROLE, msg.sender));
-        _safeMint(to, _tokenIdCounter.current());
-        _tokenIdCounter.increment();
+    function createOffer(uint _tokenID, uint _price, uint _saleID) external {
+        require(ownerOf(_tokenID) == msg.sender);
+
+        offer = Offer(_tokenID, _saleID, _price, msg.sender);
+        currentOffers[_saleID] = offer;
+
+        emit EmogramOffered(_tokenID, msg.sender, _price);
     }
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "https://ipfs.io/";
-    }
+    function createAuction(uint _tokenID, uint _minPrice, uint _auctionTime, uint _auctionID) {
+        require(msg.sender == ownerOf(_tokenID));
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
-        internal
-        override(ERC721, ERC721Enumerable)
-        {
-            super._beforeTokenTransfer(from, to, tokenId);
-        }
+        uint endBlock = block.number + _auctionTime;
 
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
-        }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-        {
-            return super.tokenURI(tokenId);
-        }
-
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) 
-        public {
-            require(
-                _isApprovedOrOwner(_msgSender(), tokenId),
-                "ERC721: transfer caller is not owner nor approved"
-            );
-            _setTokenURI(tokenId, _tokenURI);
-        }
-
-    //TODO: Events
-    function putEmogramForSale(uint _tokenId, uint _minPrice, uint _auctionTime, bool _isAuction) public {
-        require(ownerOf(_tokenId) == msg.sender);
-        require(emosOnSale[_tokenId].saleState == emogramForSaleState.NOT_FOR_SALE);
-
-        emosOnSale[_tokenId] = Offer(_tokenId, _minPrice);
-        emosOnSale[_tokenId].seller = msg.sender;
-        emosOnSale[_tokenId].auctionTime = block.number + _auctionTime;
-        
-        if(_isAuction) {
-            emosOnSale[_tokenId].saleState = emogramForSaleState.ON_AUCTION;
-        }
-        else {
-            emosOnSale[_tokenId].saleState = emogramForSaleState.ON_SALE;
-        }
-
-    }
-
-    //TODO: Events
-    //TODO: Check if the auction period is still ongoing before changing the bid
-    function placeBidOnEmogram(uint _tokenId) public payable {
-        require(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION || emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE);
-        require(msg.value >= emosOnSale[_tokenId].minPrice);
-        require(emosOnSale[_tokenId].auctionTime <= block.number);
-
-        if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_SALE) {
-            balanceOf[emosOnSale[_tokenId].seller]--;
-            balanceOf[msg.sender]++;
-            _safeTransfer(emosOnSale[_tokenId].seller, msg.sender, _tokenId);
-            emosOnSale[_tokenId].seller.transfer(msg.value * (1 - royalty));
-            emosOnSale[_tokenId].saleState = emogramForSaleState.NOT_FOR_SALE;
-        }
-
-        if(emosOnSale[_tokenId].saleState == emogramForSaleState.ON_AUCTION) {
-            if(emogramBids[_tokenId].minPrice < msg.value) {
-                emogramBids[_tokenId].bidder.transfer(emogramBids[_tokenId].minPrice);
-                emogramBids[_tokenId] = Bid(_tokenId, msg.value, msg.sender);
-            }
-            else {
-                revert();
-            }
-        }
+        auction = Auction(_auctionID, _tokenID, _minPrice, endBlock, msg.sender);
+        currentAuctions[_auctionID] = auction;
+        emit EmogramOnAuction(_tokenID, msg.sender, _auctionID, _minPrice, endBlock);
     }
         
-    function supportsInterface(bytes4 interfaceId)
-            public
-            view
-            override(ERC721, ERC721Enumerable, AccessControl)
-            returns (bool)
-        {
-            return super.supportsInterface(interfaceId);
-        }
-
 }
