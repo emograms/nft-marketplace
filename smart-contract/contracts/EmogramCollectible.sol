@@ -67,6 +67,14 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         _setTokenURI(tokenId, _tokenURI);
     }
 
+    //TODO finish this function, which transfers a specific emogram for free
+    function freeTransfer(address _receiver, uint _tokenID) {
+        require(_isApprovedOrOwner(msg.sender, _tokenID));
+        require(_ownerOf(_tokenID) == msg.sender);
+
+        _safeTransferfrom(msg.sender, _receiver, _tokeID);
+    }
+
     function mintAllEmograms(address _rec, string[] memory _tokenURIs) public returns (uint) {
         require(hasRole(MINTER_ROLE, msg.sender));
 
