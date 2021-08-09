@@ -14,7 +14,6 @@ contract Emograms is Initializable, ERC1155Upgradeable, AccessControlUpgradeable
     uint256 public BASE_PERCENTAGE = 750;
     address private beneficiary;
 
-
     interface IERC2981 is IERC165 {
     /// @notice Called with the sale price to determine how much royalty
     //          is owed and to whom.
@@ -42,8 +41,7 @@ contract Emograms is Initializable, ERC1155Upgradeable, AccessControlUpgradeable
     }
 
     function setBeneficiary(address memory _newBeneficiary) public onlyRole(BENEFICIARY_UPGRADER_ROLE) {
-        
-
+        beneficiary = _newBeneficiary;
     }
 
     function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
