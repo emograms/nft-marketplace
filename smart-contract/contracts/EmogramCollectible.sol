@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 /*TODO:
         
-        -IMPLEMENTING ROYALTY
+        -IMPLEMENTING ROYALTY 7.5%
         -szobor redeem
         
  */
@@ -67,7 +67,7 @@ contract EmogramCollectible is ERC721, ERC721Enumerable, ERC721URIStorage, ERC72
         _setTokenURI(tokenId, _tokenURI);
     }
 
-    //TODO finish this function, which transfers a specific emogram for free
+    //TODO check
     function freeTransfer(address _receiver, uint _tokenID) {
         require(_isApprovedOrOwner(msg.sender, _tokenID));
         require(_ownerOf(_tokenID) == msg.sender);
