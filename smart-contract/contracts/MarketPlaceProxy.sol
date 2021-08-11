@@ -16,6 +16,7 @@ contract MarketPlaceProxy {
     the function does not run twice
     imp -> the address of the logic contract
     */
+/*     
     address private owner;
     bool internal isInitialized;
     address internal imp;
@@ -40,18 +41,18 @@ contract MarketPlaceProxy {
     // function to upgrade the logic contract's address
     function upgradeTo(address) onlyOwner {
         imp = address;
-    }
+    } */
 
-
+}
     // Fallback function is called when we receive a function call to the proxy, as the logic function is not implemented here
     // Use external to save gas by not copying everything into the memory of the proxy contract, isntead of public
-    fallback() external payable {
+   /*  fallback() external payable {
         assembly {
 
             let ptr := mload(0x40)
 
             // copy incoming calldata
-            calldatacopy(ptr, 0, calldatasize)
+            calldatacopy(ptr, 0, calldatasize())
 
             // forward call to logic contract, impl is the address of the logic contract
             let result := delegatecall(gas, impl, ptr, calldatasize, 0, 0)
@@ -67,4 +68,4 @@ contract MarketPlaceProxy {
         }
 
     }
-}
+} */

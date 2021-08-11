@@ -1,20 +1,10 @@
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 
-
-contract Emograms is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, ERC1155BurnableUpgradeable {
-    
-    bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant BENEFICIARY_UPGRADER_ROLE = keccak256("BENEFICIARY_UPGRADER_ROLE");
-    uint256 public BASE_PERCENTAGE = 750;
-    address private beneficiary;
-
-    interface IERC2981 is IERC165 {
+interface IERC2981 is IERC165 {
     /// @notice Called with the sale price to determine how much royalty
     //          is owed and to whom.
     /// @param _tokenId - the NFT asset queried for royalty information
@@ -24,20 +14,22 @@ contract Emograms is Initializable, ERC1155Upgradeable, AccessControlUpgradeable
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount);
     }
 
+contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
 
-    function initialize() initializer public {
-        __ERC1155_init("");
-        __AccessControl_init();
-        __ERC1155Burnable_init();
+    bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BENEFICIARY_UPGRADER_ROLE = keccak256("BENEFICIARY_UPGRADER_ROLE");
+    uint256 public BASE_PERCENTAGE = 750;
+    address public beneficiary;
+    uint256[] public emogramIds;
+
+    constructor() ERC1155("") {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(URI_SETTER_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
-
         beneficiary = msg.sender;
-
-        _mint(msg.sender, "SRT", 2970, ""); 
     }
 
     function setBeneficiary(address memory _newBeneficiary) public onlyRole(BENEFICIARY_UPGRADER_ROLE) {
@@ -62,22 +54,29 @@ contract Emograms is Initializable, ERC1155Upgradeable, AccessControlUpgradeable
         _mintBatch(to, ids, amounts, data);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount) {
+        
         uint256 roundValue = SafeMath.ceil(_salePrice, basePercent);
         console.log(roundValue);
         uint256 sevenPtFivePercent = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
 
         receiver = beneficiary;
-        royaltyAmount = twoPtFivePercent;
+        royaltyAmount = sevenPtFivePercent;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC1155Upgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
+    function createEmograms(uint256[] memory _ids, uint256[] memory _amounts) public onlyRole(MINTER_ROLE) {
+
+        emogramIds[] = _ids;
+        _mint(msg.sender, "SRT", 2970, "");
+        _mintBatch(msg.sender, _ids, _amounts, "");
     }
 }

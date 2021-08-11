@@ -1,22 +1,8 @@
-pragma solidity ^0.8.0;
+/* pragma solidity ^0.8.0;
 
-/*
-    TODO:
-        -Implementing saleID, auctionID as a changeable unique Counter.counters
-        -Making sure the implementation can handle ERC-721 tokens correctly
-        -Royalty mechanism by eip-2981
-        -Events
-        -szobor redeem
-        -upgradeability
- */
-
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721Holder.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/IERC721Receiver.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract EmogramMarketplace is IERC721Receiver, ERC165, ERC721Holder {
+contract EmogramMarketplace {
     using Counters for Counters.Counter;
 
     address[] private ownerAddresses;
@@ -85,4 +71,4 @@ contract EmogramMarketplace is IERC721Receiver, ERC165, ERC721Holder {
         emit EmogramOnAuction(_tokenID, msg.sender, _auctionID, _minPrice, endBlock);
     }
         
-}
+} */
