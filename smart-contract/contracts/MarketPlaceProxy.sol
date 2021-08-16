@@ -1,71 +1,31 @@
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-/* TODO:
+contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccesControl {
 
-    assign semi-random position of imp in storage
-    to avoid collisions
+    //can upgrade to new implementation
 
- */
+    bytes32 public UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    address public upgrader;
 
-contract MarketPlaceProxy {
+    constructor(address _upgrader) {
 
-    /* 
-    owner -> the owner of the contract (admin)
-    isInitialized -> we use initializer instead of constructor, this needed to make sure
-    the function does not run twice
-    imp -> the address of the logic contract
-    */
-/*     
-    address private owner;
-    bool internal isInitialized;
-    address internal imp;
-
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        upgrader = _upgrader;
+        _setupRole(UPGRADER_ROLE, upgrader); 
     }
 
-    modifier isInitalized {
-        require(!isInitialized, "Contract instance has already been initalized");
-        _;
+    function authorizeUpgrade(address _newImplementation) internal override onlyRole(UPGRADER_ROLE) {
+
+        _authorizeUpgrade(_newImplementation);
     }
 
-    function initialize(address _imp) isInitialized public {
-        imp = _imp;
-        owner = msg.sender;
-        isInitialized = true;
-    }
+    function changeUpgrader(address _newUpgradee) public onlyRole(DEFAULT_ADMIN_ROLE) {
 
-    // function to upgrade the logic contract's address
-    function upgradeTo(address) onlyOwner {
-        imp = address;
-    } */
+        _revokeRole(UPGRADER_ROLE, upgrader);
+        _grantRole(UPGRADER_ROLE, _newUpgradee);
+    }
 
 }
-    // Fallback function is called when we receive a function call to the proxy, as the logic function is not implemented here
-    // Use external to save gas by not copying everything into the memory of the proxy contract, isntead of public
-   /*  fallback() external payable {
-        assembly {
-
-            let ptr := mload(0x40)
-
-            // copy incoming calldata
-            calldatacopy(ptr, 0, calldatasize())
-
-            // forward call to logic contract, impl is the address of the logic contract
-            let result := delegatecall(gas, impl, ptr, calldatasize, 0, 0)
-            let size := returndatasize
-
-            // get the return data
-            returndatacopy(ptr, 0, size)
-
-            // forward return data back to caller
-            switch result
-            case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
-        }
-
-    }
-} */
