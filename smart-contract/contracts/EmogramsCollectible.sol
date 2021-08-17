@@ -33,25 +33,30 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         beneficiary = msg.sender;
     }
 
-    function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
+    function setURI(string memory newuri) 
+        public 
+        onlyRole(URI_SETTER_ROLE) {
         _setURI(newuri);
     }
 
     function mint(address account, uint256 id, uint256 amount, bytes memory data)
         public
-        onlyRole(MINTER_ROLE)
-    {
+        onlyRole(MINTER_ROLE) {
+        
         _mint(account, id, amount, data);
     }
 
     function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
         public
-        onlyRole(MINTER_ROLE)
-    {
+        onlyRole(MINTER_ROLE) {
+        
         _mintBatch(to, ids, amounts, data);
     }
 
-    function setBeneficiary(address _newBeneficiary) public onlyRole(BENEFICIARY_UPGRADER_ROLE) {
+    function setBeneficiary(address _newBeneficiary)
+        public 
+        onlyRole(BENEFICIARY_UPGRADER_ROLE) {
+        
         beneficiary = _newBeneficiary;
     }
 
@@ -59,12 +64,13 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         public
         view
         override(ERC1155, AccessControl)
-        returns (bool)
-    {
+        returns (bool) {
+        
         return super.supportsInterface(interfaceId);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount) {
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external view returns (address receiver, uint256 royaltyAmount) {
         
         uint256 roundValue = SafeMath.ceil(_salePrice, BASE_PERCENTAGE);
         uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
@@ -72,8 +78,10 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         receiver = beneficiary;
     }
 
-    function createEmograms(uint256[] memory _ids, uint256[] memory _amounts) public onlyRole(MINTER_ROLE) {
-
+    function createEmograms(uint256[] memory _ids, uint256[] memory _amounts) 
+        public 
+        onlyRole(MINTER_ROLE) {
+        
         emogramIds[] = _ids;
         mint(msg.sender, "SRT", 2970, "");
         mintBatch(msg.sender, _ids, _amounts, "");
