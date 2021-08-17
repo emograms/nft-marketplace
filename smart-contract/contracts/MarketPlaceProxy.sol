@@ -17,12 +17,17 @@ contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccesControl {
         _setupRole(UPGRADER_ROLE, upgrader); 
     }
 
-    function authorizeUpgrade(address _newImplementation) internal override onlyRole(UPGRADER_ROLE) {
+    function authorizeUpgrade(address _newImplementation)
+        internal 
+        override 
+        onlyRole(UPGRADER_ROLE) {
 
-        _authorizeUpgrade(_newImplementation);
+            _authorizeUpgrade(_newImplementation);
     }
 
-    function changeUpgrader(address _newUpgradee) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function changeUpgrader(address _newUpgradee) 
+        public 
+        onlyRole(DEFAULT_ADMIN_ROLE) {
 
         _revokeRole(UPGRADER_ROLE, upgrader);
         _grantRole(UPGRADER_ROLE, _newUpgradee);
