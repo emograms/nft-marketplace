@@ -67,10 +67,9 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount) {
         
         uint256 roundValue = SafeMath.ceil(_salePrice, BASE_PERCENTAGE);
-        uint256 sevenPtFivePercent = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
+        uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
 
         receiver = beneficiary;
-        royaltyAmount = sevenPtFivePercent;
     }
 
     function createEmograms(uint256[] memory _ids, uint256[] memory _amounts) public onlyRole(MINTER_ROLE) {
