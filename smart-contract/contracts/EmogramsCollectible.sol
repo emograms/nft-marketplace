@@ -20,9 +20,24 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BENEFICIARY_UPGRADER_ROLE = keccak256("BENEFICIARY_UPGRADER_ROLE");
+
+    // Royalty Base Percentage 7.5%
+    // Royalty beneficiary address
     uint256 public BASE_PERCENTAGE = 750;
     address payable public beneficiary;
-    uint256[] public emogramIds;
+
+    // tokenId of the Fungible token, this won't change
+    uint8 public constant SRT = 1; 
+
+    // Start Id of the Non-Fungible Emograms NFT
+    // Since we want a collection of 99 NFTs, 
+    // we need to increment this Id every time we mint 
+    // a new Emogram NFT
+    uint public emogramId = 2;
+
+    event FungibleTokenMinted(address indexed _minter, uint256 indexed _tokenId, uint256 _amount);
+    event NonFungibleTokenMinted(address indexed _minter, uint256 indexed _tokenid);
+    event BeneficiaryChanged(address indexed _newBeneficiary);
 
     constructor() ERC1155("") {
 
@@ -30,7 +45,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         _setupRole(URI_SETTER_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
-        beneficiary = msg.sender;
+        beneficiary = payable(msg.sender);
     }
 
     function setURI(string memory newuri) 
@@ -53,37 +68,70 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         _mintBatch(to, ids, amounts, data);
     }
 
-    function setBeneficiary(address _newBeneficiary)
+    function setBeneficiary(address payable  _newBeneficiary)
         public 
         onlyRole(BENEFICIARY_UPGRADER_ROLE) {
         
         beneficiary = _newBeneficiary;
+        emit BeneficiaryChanged(_newBeneficiary);
     }
 
-    function supportsInterface(bytes4 interfaceId)
+    function createFunToken(uint256 _amount, uint8 _tokenId)
+     public
+     onlyRole(MINTER_ROLE) 
+     returns (uint256 amount, uint8 tokenId) {
+
+         mint(msg.sender, _tokenId, _amount, "");
+         emit FungibleTokenMinted(msg.sender, _tokenId, _amount);
+         return (_amount, _tokenId);
+    }
+
+    function createEmogram() 
+        public 
+        onlyRole(MINTER_ROLE) 
+        returns (uint256) {
+
+            mint(msg.sender, emogramId, 1, "");
+            emit NonFungibleTokenMinted(msg.sender, emogramId);
+            emogramId = emogramId + 1;
+            return emogramId;
+    }
+
+    // TODO: Research batchMint solutions
+    function createEmogramsCollection(uint256 _amount)
+        public
+        onlyRole(MINTER_ROLE)
+        returns (uint256) {
+
+            for(uint j = emogramId; j <= _amount; j++) {
+                createEmogram();
+            }
+        }
+
+    function ceil(uint a, uint m)
+        internal
+        view 
+        returns (uint) {
+            return ((a + m - 1) / m) * m;
+    }
+
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view 
+        returns (address receiver, uint256 royaltyAmount) {
+        
+        uint256 roundValue = ceil(_salePrice, BASE_PERCENTAGE);
+        uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
+
+        receiver = beneficiary;
+    }
+
+        function supportsInterface(bytes4 interfaceId)
         public
         view
         override(ERC1155, AccessControl)
         returns (bool) {
         
         return super.supportsInterface(interfaceId);
-    }
-
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
-        external view returns (address receiver, uint256 royaltyAmount) {
-        
-        uint256 roundValue = SafeMath.ceil(_salePrice, BASE_PERCENTAGE);
-        uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
-
-        receiver = beneficiary;
-    }
-
-    function createEmograms(uint256[] memory _ids, uint256[] memory _amounts) 
-        public 
-        onlyRole(MINTER_ROLE) {
-        
-        emogramIds[] = _ids;
-        mint(msg.sender, "SRT", 2970, "");
-        mintBatch(msg.sender, _ids, _amounts, "");
     }
 }

@@ -1,9 +1,9 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccesControl {
+abstract contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
 
     //can upgrade to new implementation
 
@@ -19,7 +19,6 @@ contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccesControl {
 
     function authorizeUpgrade(address _newImplementation)
         internal 
-        override 
         onlyRole(UPGRADER_ROLE) {
 
             _authorizeUpgrade(_newImplementation);
@@ -29,8 +28,8 @@ contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccesControl {
         public 
         onlyRole(DEFAULT_ADMIN_ROLE) {
 
-        _revokeRole(UPGRADER_ROLE, upgrader);
-        _grantRole(UPGRADER_ROLE, _newUpgradee);
+        revokeRole(UPGRADER_ROLE, upgrader);
+        grantRole(UPGRADER_ROLE, _newUpgradee);
     }
 
 }
