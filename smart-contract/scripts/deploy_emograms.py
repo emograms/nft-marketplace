@@ -1,9 +1,13 @@
 import os
-from brownie import Emogramscollectible, accounts, network, config
+from brownie import EmogramsCollectible, EmogramMarketplace, accounts, network, config
 
 
 def main():
-    dev = accounts.add(config["wallets"]["from_key"])
-    print(network.show_active())
-    publish_source = True if os.getenv("ETHERSCAN_TOKEN") else False
-    Emogramscollectible.deploy({"from": dev}, publish_source=publish_source)
+    dev = accounts.load(0)
+    print("Active Network: ")
+    print(network.show_active() + "\n")
+    print("Active address in use: " + dev)
+    emograms = EmogramsCollectible.deploy({'from': dev})
+    marketplace = EmogramMarketplace.deploy({'from': dev})
+
+    print("Contracts deployed")

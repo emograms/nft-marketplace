@@ -27,11 +27,34 @@ contract EmogramMarketplace is AccessControl {
         bool isSold;
     }
 
+    // auctionId - Unique ID of the auction
+    // tokenAddress - Address of the token contract
+    // tokenId - Id of the NFT being auctioned
+    // seller - Address of the seller
+    // highestBidder - Address of the current highest bidder
+    // startPrice - The starting price of the auction
+    // highestBid -  The current highest bid (bid of the highestBidder)
+    // duration - How long the auction is running for
+    // onAuction - Is the emogram currently on auction
+    struct auctionItem {
+        uint256 auctionId;
+        address tokenAddress;
+        uint256 tokenId;
+        address payable seller;
+        address payable highestBidder;
+        uint256 startPrice;
+        uint256 highestBid;
+        uint256 duration;
+        bool onAuction;
+    }
+
     // All emograms in the marketplace
     sellItem[] public emogramsOnSale;
+    auctionItem[] public emogramsOnAuction;
 
     // Emograms in the marketplace currently up for sale
     mapping(address => mapping(uint256 => bool)) activeEmograms;
+    mapping(address => mapping(uint256 => bool)) activeAuctions;
 
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
     event EmogramSold (uint256 indexed id, address indexed buyer, uint256 askingPrice);
