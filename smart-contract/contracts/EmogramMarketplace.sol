@@ -203,10 +203,10 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         return _auctionId;
     }
 
-/*  function stepAuctions()
+    function stepAuctions()
     payable
     external
      {
-
-     } */
+         
+     } 
 }
