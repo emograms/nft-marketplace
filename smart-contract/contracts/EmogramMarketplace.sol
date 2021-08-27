@@ -132,7 +132,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     external
     nonReentrant() 
     itemExists(id) isForSale(id) 
-    hasTransferApproval(emogramsOnSale[id].tokenAddress, emogramsOnSale[id].tokenId) 
     {
         require(msg.value >= emogramsOnSale[id].price, "Not enough funds for purchase");
         require(msg.sender != emogramsOnSale[id].seller);
@@ -207,6 +206,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     payable
     external
      {
-         
+
      } 
 }
