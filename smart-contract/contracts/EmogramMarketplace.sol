@@ -12,6 +12,8 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
 
+    bool public isInitialAuction = true;
+
     // Struct for a fixed price sell
     // sellId - Id of the sale
     // tokenAddress - the address of the token contract
@@ -53,9 +55,12 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     sellItem[] public emogramsOnSale;
     auctionItem[] public emogramsOnAuction;
 
+    //The order of the emograms during the initial auction period
+    uint256[99] public initialEmogramsorder;
+
     // Emograms in the marketplace currently up for sale or auction
-    mapping(address => mapping(uint256 => bool)) activeEmograms;
-    mapping(address => mapping(uint256 => bool)) activeAuctions;
+    mapping(address => mapping(uint256 => bool)) public activeEmograms;
+    mapping(address => mapping(uint256 => bool)) public activeAuctions;
 
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
     event EmogramSold (uint256 indexed id, address indexed buyer, uint256 askingPrice);
@@ -63,10 +68,13 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
     event AuctionCanceled(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress);
     event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
+    event InitialAuctionSale(uint256 indexed id, uint256 indexed tokenid, address highestBidder, uint256 highestBid);
+    event InitialAuctionFinished();
 
     // Check if the caller is actually the owner
     modifier isTheOwner(address _tokenAddress, uint256 _tokenId, address _owner) {
         IERC1155 tokenContract = IERC1155(_tokenAddress);
+        require(tokenContract.balanceOf(_owner, _tokenId) != 0);
         _;
     }
 
@@ -78,8 +86,18 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         _;
     }
 
+    modifier isInitialAuctionPeriod() {
+        require(isInitialAuction == true, "The initial auction period has already ended");
+        _;
+    }
+
     modifier auctionNotEnded(uint256 _auctionId) {
         require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction has already ended.");
+        _;
+    }
+
+        modifier auctionEnded(uint256 _auctionId) {
+        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction has already ended.");
         _;
     }
 
@@ -99,6 +117,13 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
+    }
+
+    function setInitialorder(uint256[99] memory ids) 
+     public
+     onlyRole(FOUNDER_ROLE) {
+
+         initialEmogramsorder = ids;
     }
 
 
@@ -131,7 +156,8 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     payable  
     external
     nonReentrant() 
-    itemExists(id) isForSale(id) 
+    itemExists(id) 
+    isForSale(id) 
     {
         require(msg.value >= emogramsOnSale[id].price, "Not enough funds for purchase");
         require(msg.sender != emogramsOnSale[id].seller);
@@ -202,10 +228,80 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         return _auctionId;
     }
 
-    function stepAuctions()
+    function stepAuctions(address _tokenAddress, uint256 _startPrice)
+    isInitialAuctionPeriod()
+    nonReentrant()
+    onlyRole(FOUNDER_ROLE)
     payable
     external
      {
+        require(initialEmogramsorder.length > 0);
 
-     } 
+        if(emogramsOnAuction.length == 3) {
+            for(uint i = 0; i < 3; i++) {
+                if(emogramsOnAuction[i].highestBidder == msg.sender) {
+                    endAuctionWithNoBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
+                }
+                else {
+                    endAuctionWithBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
+                }
+            }
+        }
+
+        for(uint256 i = initialEmogramsorder.length; i > initialEmogramsorder.length - 3; i--) {
+
+            createAuction(i, _tokenAddress, 3, _startPrice);
+            delete initialEmogramsorder[i];
+        }
+
+     }
+
+    function endAuctionWithBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
+
+        require(emogramsOnAuction[_auctionId].highestBid != 0);
+
+        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
+        require(sent, "Failed to place bid");
+
+        IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
+            
+        activeAuctions[_tokenAddress][_tokenId] = false;
+        delete emogramsOnAuction[_auctionId];
+
+        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);
+     }
+
+    function endAuctionWithNoBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
+
+        require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
+        require(emogramsOnAuction[_auctionId].highestBid == 0 && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
+
+        activeAuctions[_tokenAddress][_tokenId] = false;
+        delete emogramsOnAuction[_auctionId];
+
+        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);         
+     }
+
+    function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)
+     auctionEnded(_auctionId)
+     nonReentrant()
+     isTheOwner(_tokenAddress, _tokenId, msg.sender)
+     hasTransferApproval(_tokenAddress, _tokenId)
+     itemExists(_tokenId) 
+     isForSale(_tokenId)
+     public
+     returns (bool)
+     {
+        if(emogramsOnAuction[_auctionId].highestBid != 0) {
+
+            endAuctionWithBid(_tokenAddress, _tokenId, _auctionId);
+            return true;
+        }
+
+        else if(emogramsOnAuction[_auctionId].highestBid == 0 && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
+
+            endAuctionWithNoBid(_tokenAddress, _tokenId, _auctionId);
+            return true;
+        }
+     }
 }

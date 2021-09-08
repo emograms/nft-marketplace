@@ -54,6 +54,13 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         _setURI(newuri);
     }
 
+    function ownerOf(uint256 _tokenId, address _maybeOwner)
+        public 
+        view 
+        returns (bool) {
+            return balanceOf(_maybeOwner, _tokenId) != 0;
+    }
+
     function mint(address account, uint256 id, uint256 amount, bytes memory data)
         public
         onlyRole(MINTER_ROLE) {
