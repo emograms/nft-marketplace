@@ -182,7 +182,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, 0, durationToDays, true));
         activeAuctions[_tokenAddress][_tokenId] = true;
 
-        assert(emogramsOnAuction[emogramsOnAuction.length].auctionId == emogramsOnAuction.length);
+        assert(emogramsOnAuction[emogramsOnAuction.length - 1].auctionId == emogramsOnAuction.length - 1);
         emit AuctionCreated(emogramsOnAuction.length, _tokenId, msg.sender, _tokenAddress, _startPrice, durationToDays);
 
         return emogramsOnAuction.length;
