@@ -62,9 +62,8 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
     mapping(address => mapping(uint256 => bool)) public activeAuctions;
 
-    event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
-    event EmogramSold (uint256 indexed id, address indexed buyer, uint256 askingPrice);
-    event BidPlaced(uint256 indexed id, address indexed bidder, uint256 bid);
+    event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice);
+    event BidPlaced(uint256 indexed id, uint256 indexed tokenId, address indexed bidder, uint256 bid);
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
     event AuctionCanceled(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress);
     event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
@@ -82,7 +81,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     // TODO: Add royalty check here
     modifier hasTransferApproval (address tokenAddress, uint256 tokenId) {
         IERC1155 tokenContract = IERC1155(tokenAddress);
-        require(tokenContract.isApprovedForAll(msg.sender, address(this)) == true);
+        require(tokenContract.isApprovedForAll(msg.sender, address(this)) == true, "No Approval");
         _;
     }
 
@@ -261,7 +260,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         require(emogramsOnAuction[_auctionId].highestBid != 0);
 
         (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-        require(sent, "Failed to place bid");
+        require(sent, "Failed the transaction");
 
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
             
