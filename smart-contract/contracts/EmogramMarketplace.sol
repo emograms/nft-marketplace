@@ -92,12 +92,12 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     }
 
     modifier auctionNotEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction has already ended.");
+        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction is still ongoing.");
         _;
     }
 
         modifier auctionEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction has already ended.");
+        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction has already ended.");
         _;
     }
 
