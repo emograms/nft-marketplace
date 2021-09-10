@@ -62,6 +62,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
     mapping(address => mapping(uint256 => bool)) public activeAuctions;
 
+    event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
     event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice);
     event BidPlaced(uint256 indexed id, uint256 indexed tokenId, address indexed bidder, uint256 bid);
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
@@ -166,7 +167,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         IERC1155(emogramsOnSale[id].tokenAddress).safeTransferFrom(emogramsOnSale[id].seller, msg.sender, emogramsOnSale[id].tokenId, 1, "");
         emogramsOnSale[id].seller.transfer(msg.value);
 
-        emit EmogramSold(id, msg.sender, emogramsOnSale[id].price);
+        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price);
     }
 
     function createAuction(uint256 _tokenId, address _tokenAddress, uint256 _duration, uint256 _startPrice) 
@@ -223,7 +224,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
         emogramsOnAuction[_auctionId].highestBid = msg.value;
 
-        emit BidPlaced(_auctionId, msg.sender, msg.value);
+        emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
         return _auctionId;
     }
 
@@ -272,7 +273,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
     function endAuctionWithNoBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
 
-        require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
+        require(activeAuctions[_tokenAddress][_tokenId] == true);
         require(emogramsOnAuction[_auctionId].highestBid == 0 && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
 
         activeAuctions[_tokenAddress][_tokenId] = false;
