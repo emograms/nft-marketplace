@@ -118,7 +118,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     _;
   }
 
-  // Check if the auction can be finished by the msg.sender
+  // Check if the auction can be finished by the msg.sender (seller or highestBidder)
   modifier isAllowedToFinishAuction(address _account, uint256 _auctionId) {
     require(
       (emogramsOnAuction[_auctionId].highestBidder == _account) ||
@@ -368,7 +368,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     );
     require(
       emogramsOnAuction[_auctionId].seller != msg.sender,
-      "You can't bid on your own auction!"
+      "You can't bid on your own auction"
     );
 
     (bool sent, bytes memory data) = emogramsOnAuction[_auctionId]
@@ -432,10 +432,10 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
   ) private {
     require(emogramsOnAuction[_auctionId].highestBid != 0);
 
-    (bool sent, bytes memory data) = emogramsOnAuction[_auctionId]
-      .highestBidder
-      .call{value: emogramsOnAuction[_auctionId].highestBid}("");
-    require(sent, "Failed the transaction");
+    (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].seller.call{
+      value: emogramsOnAuction[_auctionId].highestBid
+    }("");
+    require(sent, "Failed transaction");
 
     IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(
       emogramsOnAuction[_auctionId].seller,
@@ -490,7 +490,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     public
     auctionEnded(_auctionId)
     nonReentrant
-    isTheOwner(_tokenAddress, _tokenId, msg.sender)
     isAllowedToFinishAuction(msg.sender, _auctionId)
     hasTransferApproval(_tokenAddress, _tokenId)
     itemExistsAuction(_auctionId)
