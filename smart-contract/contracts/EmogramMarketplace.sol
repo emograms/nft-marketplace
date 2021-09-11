@@ -179,7 +179,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
         uint256 durationToDays = block.timestamp + _duration * 1 days;
-        emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, 0, durationToDays, true));
+        emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, _startPrice, durationToDays, true));
         activeAuctions[_tokenAddress][_tokenId] = true;
 
         assert(emogramsOnAuction[emogramsOnAuction.length - 1].auctionId == emogramsOnAuction.length - 1);
