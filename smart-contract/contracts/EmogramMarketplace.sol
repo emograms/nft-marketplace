@@ -287,7 +287,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
      nonReentrant()
      isTheOwner(_tokenAddress, _tokenId, msg.sender)
      hasTransferApproval(_tokenAddress, _tokenId)
-     itemExists(_tokenId) 
+     itemExists(_auctionId) 
      isForSale(_tokenId)
      public
      returns (bool)
