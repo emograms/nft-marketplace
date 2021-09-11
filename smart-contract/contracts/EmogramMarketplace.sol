@@ -103,12 +103,12 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
     // Check if the item exists
     modifier itemExists(uint256 id){
-        require((id <= emogramsOnSale.length && emogramsOnSale[id - 1].sellId == id) || (id <= emogramsOnAuction.length && emogramsOnAuction[id - 1].auctionId == id), "could not find item");
+        require((id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id, "could not find item");
         _;
     }
     
     modifier itemExistsAuction(uint256 id) {
-        require(id <= emogramsOnAuction.length && emogramsOnAuction[id - 1].auctionId == id, "could not find item");
+        require(id <= emogramsOnAuction.length && emogramsOnAuction[id].auctionId == id, "could not find item");
         _;
     }
 
@@ -292,7 +292,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
      nonReentrant()
      isTheOwner(_tokenAddress, _tokenId, msg.sender)
      hasTransferApproval(_tokenAddress, _tokenId)
-     itemExists(_auctionId) 
+     itemExistsAuction(_auctionId) 
      public
      returns (bool)
      {
