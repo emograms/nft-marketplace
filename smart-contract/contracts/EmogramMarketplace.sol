@@ -78,6 +78,11 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         _;
     }
 
+    modifier isTheHighestBidder(address _bidder, uint256 _auctionId) {
+        require(emogramsOnAuction[_auctionId].highestBidder == _bidder, "Not the highest Bidder");
+        _;
+    }
+
     // Check if marketplace has approval to sell/buy on behalf of the caller
     // TODO: Add royalty check here
     modifier hasTransferApproval (address tokenAddress, uint256 tokenId) {
@@ -291,18 +296,19 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
      auctionEnded(_auctionId)
      nonReentrant()
      isTheOwner(_tokenAddress, _tokenId, msg.sender)
+     isTheHighestBidder(msg.sender, _auctionId)
      hasTransferApproval(_tokenAddress, _tokenId)
      itemExistsAuction(_auctionId) 
      public
      returns (bool)
      {
-        if(emogramsOnAuction[_auctionId].highestBid != 0) {
+        if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {
 
             endAuctionWithBid(_tokenAddress, _tokenId, _auctionId);
             return true;
         }
 
-        else if(emogramsOnAuction[_auctionId].highestBid == 0 && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
+        else if(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
 
             endAuctionWithNoBid(_tokenAddress, _tokenId, _auctionId);
             return true;
