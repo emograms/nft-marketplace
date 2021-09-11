@@ -109,6 +109,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     
     modifier itemExistsAuction(uint256 id) {
         require(id <= emogramsOnAuction.length && emogramsOnAuction[id - 1].auctionId == id, "could not find item");
+        _;
     }
 
     // Check if the item is actually up for sale
