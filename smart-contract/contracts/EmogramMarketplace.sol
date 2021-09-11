@@ -92,18 +92,18 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     }
 
     modifier auctionNotEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction is still ongoing.");
+        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction has already ended.");
         _;
     }
 
         modifier auctionEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction has already ended.");
+        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction is still ongoing.");
         _;
     }
 
     // Check if the item exists
     modifier itemExists(uint256 id){
-        require(id < emogramsOnSale.length && emogramsOnSale[id].sellId == id, "could not find item");
+        require((id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id) || (id <= emogramsOnAuction.length && emogramsOnAuction[id].auctionId == id), "could not find item");
         _;
     }
 
@@ -179,7 +179,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
         uint256 durationToDays = block.timestamp + _duration * 1 days;
-        emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, 0, durationToDays, true));
+        emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, _startPrice, durationToDays, true));
         activeAuctions[_tokenAddress][_tokenId] = true;
 
         assert(emogramsOnAuction[emogramsOnAuction.length - 1].auctionId == emogramsOnAuction.length - 1);
@@ -208,7 +208,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     }
 
     function PlaceBid(uint256 _auctionId, uint256 _tokenId, address _tokenAddress)
-    hasTransferApproval(_tokenAddress, _tokenId)
     auctionNotEnded(_auctionId)
     nonReentrant()
     payable
@@ -275,7 +274,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     function endAuctionWithNoBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
 
         require(activeAuctions[_tokenAddress][_tokenId] == true);
-        require(emogramsOnAuction[_auctionId].highestBid == 0 && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
+        require(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
 
         activeAuctions[_tokenAddress][_tokenId] = false;
         delete emogramsOnAuction[_auctionId];
