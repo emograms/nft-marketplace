@@ -42,6 +42,8 @@ def main():
     print("Placing Bid")
     marketplace.PlaceBid(0, 3, emograms, {'from': accounts[1], 'amount': 11000000000000000000})
 
+    print(marketplace.getBalance({'from': accounts[0]}))
+
     time.sleep(2)
 
     marketplace.cancelAuction(0, 3, emograms)
