@@ -41,6 +41,9 @@ contract FounderVault is AccessControl, ReentrancyGuard {
     onlyRole(WITHDRAWER_ROLE)
     public {
 
+        require(totalContents == address(this).balance, "Balance inconsistent!");
+        require(totalContents != 0, "Vault empty!");
+        
         for(uint i = 0; i < Founders.length; i++) {
             uint256 toPay = SafeMath.div(SafeMath.mul(totalContents, Percentages[Founders[i]]), 10000);
 
