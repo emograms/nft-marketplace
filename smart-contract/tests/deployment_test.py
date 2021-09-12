@@ -1,3 +1,4 @@
+import time
 from brownie import EmogramsCollectible, EmogramMarketplace, accounts
 
 
@@ -70,15 +71,32 @@ def test_fixed_buy():
     '''
     Minting an NFT, approving marketplace, selling on fixed price and buying
     '''
+    seller_init_balance = accounts[0].balance()
+    sell_price = 1e8
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-    marketplace.addEmogramToMarket(2, emograms, 10, {'from': accounts[0]})
+    marketplace.addEmogramToMarket(
+        2, emograms, sell_price, {'from': accounts[0]})
     marketplace.buyEmogram(
         0, {'from': accounts[1], 'amount': 10000000000000000000})
 
     assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 1
+    assert accounts[0].balance() == seller_init_balance + sell_price
+
+
+def test_auction_cancel():
+    '''
+    Minting an NFT, approving marketplace, selling on auction and canceling it
+    '''
+
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
+    emograms.createEmogram({'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+    marketplace.createAuction(2, emograms, 10, 1e18, {'from': accounts[0]})
+    marketplace.cancelAuction(0, 2, emograms, {'from': accounts[0]})
 
 
 def test_auction_buy():
@@ -100,20 +118,46 @@ def test_auction_buy():
     marketplace.finishAuction(emograms, 2, 0, {'from': accounts[0]})
 
 
-def test_auction_cancel():
-    '''
-    Minting an NFT, approving marketplace, selling on auction and canceling it
-    '''
-
-    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
-    emograms.createEmogram({'from': accounts[0]})
-    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-    marketplace.createAuction(2, emograms, 10, 1e18, {'from': accounts[0]})
-    marketplace.cancelAuction(0, 2, emograms, {'from': accounts[0]})
-
-
 '''
 Todo:
+- auction finish without bid
+- auction finish with bid
 - mint 6 emograms, put up 3 for initial auction, bid for 2 and leave 1 unbidded, call stepAuction to close and repeate
 '''
+
+
+auction_time = 15
+print(accounts[0].balance())
+
+emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
+emograms.createEmogram({'from': accounts[0]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
+
+
+marketplace.createAuction(2, emograms, auction_time,
+                          1e18, {'from': accounts[0]})
+marketplace.PlaceBid(
+    0, 2, emograms, {'from': accounts[1], 'value': 1.23e18})
+marketplace.PlaceBid(
+    0, 2, emograms, {'from': accounts[2], 'value': 1.24e18})
+
+auction = marketplace.emogramsOnAuction(0)
+print('auctionItem[0]: ', auction)
+
+print('SLEEP: ', auction_time, 'sec')
+time.sleep(auction_time+1)
+tx2 = marketplace.finishAuction(emograms, 2, 0, {'from': accounts[2]})
+auction = marketplace.emogramsOnAuction(0)
+print('auctionItem[0]: ', auction)
+print(accounts[0].balance())
+
+
+emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
+emograms.createEmogram({'from': accounts[0]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+marketplace.createAuction(2, emograms, 30, 1e18, {'from': accounts[0]})
+tx = marketplace.cancelAuction(0, 2, emograms, {'from': accounts[0]})
