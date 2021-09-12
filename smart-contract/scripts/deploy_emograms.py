@@ -1,4 +1,4 @@
-import os
+import os, time
 from brownie import EmogramsCollectible, EmogramMarketplace, accounts, network
 
 
@@ -10,20 +10,21 @@ def main():
     marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
 
     print("Contracts deployed\n")
-
-    for x in range(0,9):
-        print("Minting Emogram\n")
-        emograms.createEmogram({'from': accounts[0]})
-        print(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}))
-
+    
+    #emograms.createEmogramsCollection(99, {'from': accounts[0]})
+    print(len(list(range(2,101))))
+    print([1 for i in range(99)])
+    print(len([1 for i in range(99)]))
+    emograms.mintBatch(accounts[0], list(range(2,101)), [1 for i in range(99)], "")
+    
     y = 0
-    for x in range(0,100):
+    for x in range(0,101):
         if(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}) != 0):
             y = y + emograms.balanceOf(accounts[0], x, {'from': accounts[0]})
     print("Total emograms minted: ")
     print(y)
 
-    emograms.createFunToken(2970, 1, {'from': accounts[0]})
+    emograms.createFunToken(110, 1, {'from': accounts[0]})
     print(emograms.balanceOf(accounts[0], 1, {'from': accounts[0]}))
 
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
@@ -31,3 +32,23 @@ def main():
     marketplace.addEmogramToMarket(2, emograms, 10, {'from': accounts[0]})
     marketplace.buyEmogram(0, {'from': accounts[1], 'amount': 10000000000000000000})
     print(emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}))
+
+    print("Sell succesfull")
+
+    print("creating auction")
+
+    marketplace.createAuction(3, emograms, 10, 10000000000000000000, {'from': accounts[0]})
+    
+    print("Placing Bid")
+    marketplace.PlaceBid(0, 3, emograms, {'from': accounts[1], 'amount': 11000000000000000000})
+
+    time.sleep(11)
+
+    tx = marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
+    print(tx.traceback())
+    print("Events")
+    print(tx.events)
+
+
+
+    

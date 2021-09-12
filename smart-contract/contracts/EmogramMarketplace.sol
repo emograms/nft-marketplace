@@ -215,7 +215,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             delete emogramsOnAuction[_auctionId];
             emit AuctionCanceled(_auctionId, _tokenId, msg.sender, _tokenAddress);
         }
-        
+
         else {
         (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
         require(sent, "Failed to cancel");
@@ -279,7 +279,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
         require(emogramsOnAuction[_auctionId].highestBid != 0);
 
-        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].seller.call{value: emogramsOnAuction[_auctionId].highestBid}("");
+        (bool sent, bytes memory data) = payable(emogramsOnAuction[_auctionId].seller).call{value: emogramsOnAuction[_auctionId].highestBid}("");
         require(sent, "Failed the transaction");
 
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
