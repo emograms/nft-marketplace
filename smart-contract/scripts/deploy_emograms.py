@@ -9,10 +9,12 @@ def main():
     print(network.show_active() + "\n")
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
-    #foundervault = FounderVault.deploy({'from': accounts[0]})
+    foundervault = FounderVault.deploy(accounts[0:5], [20, 20, 30, 15, 15], {'from': accounts[0]})
 
     print("Contracts deployed\n")
 
+    emograms.setBeneficiary(foundervault, {'from': accounts[0]})
+    print("FounderVault set as royalty beneficiary")
     #emograms.createEmogramsCollection(99, {'from': accounts[0]})
     print(len(list(range(2, 101))))
     print([1 for i in range(99)])
