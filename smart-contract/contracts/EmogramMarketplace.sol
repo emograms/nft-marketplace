@@ -123,7 +123,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         _;
     }
 
-    constructor() {
+    constructor() payable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
@@ -175,7 +175,8 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         emogramsOnSale[id].isSold = true;
         activeEmograms[emogramsOnSale[id].tokenAddress][emogramsOnSale[id].tokenId] = false;
         IERC1155(emogramsOnSale[id].tokenAddress).safeTransferFrom(emogramsOnSale[id].seller, msg.sender, emogramsOnSale[id].tokenId, 1, "");
-        emogramsOnSale[id].seller.transfer(msg.value);
+        (bool sent, bytes memory data) = emogramsOnSale[id].seller.call{value: msg.value}("");
+        require(sent, "Failed to buy");
 
         emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price);
     }
@@ -209,7 +210,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
 
-        if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {
+        if(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice) {
 
             activeAuctions[_tokenAddress][_tokenId] = false;
             delete emogramsOnAuction[_auctionId];
@@ -279,7 +280,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
         require(emogramsOnAuction[_auctionId].highestBid != 0);
 
-        (bool sent, bytes memory data) = payable(emogramsOnAuction[_auctionId].seller).call{value: emogramsOnAuction[_auctionId].highestBid}("");
+        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].seller.call{value: emogramsOnAuction[_auctionId].highestBid}("");
         require(sent, "Failed the transaction");
 
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
@@ -324,4 +325,10 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             return true;
         }
      }
+
+         function getBalance() public view returns (uint) {
+        return address(this).balance;
+         }
+
+        receive() external payable {}
 }

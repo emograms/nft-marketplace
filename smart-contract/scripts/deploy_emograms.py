@@ -37,6 +37,7 @@ def main():
     print(emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}))
     print("Sell succesfull")
 
+<<<<<<< HEAD
     print('----Auction create & Cancel w/o bid----')
     print("Creating auction eid#3")
     marketplace.createAuction(
@@ -44,6 +45,17 @@ def main():
     print("Placing Bid eid#3")
     marketplace.PlaceBid(
         0, 3, emograms, {'from': accounts[1], 'amount': 1.1e18})
+=======
+    print("creating auction")
+
+    marketplace.createAuction(3, emograms, 10, 10000000000000000000, {'from': accounts[0]})
+    
+    print("Placing Bid")
+    marketplace.PlaceBid(0, 3, emograms, {'from': accounts[1], 'amount': 11000000000000000000})
+
+    print(marketplace.getBalance({'from': accounts[0]}))
+
+>>>>>>> bb82513608499c15b6aa1c8fa3b10cc7cf13e774
     time.sleep(2)
     print("Canceling auction eid#3")
     marketplace.cancelAuction(0, 3, emograms)
