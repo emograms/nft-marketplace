@@ -238,6 +238,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "You can't bid on your own auction!");
 
+        if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {    
         (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
         require(sent, "Failed to place bid");
 
@@ -246,6 +247,15 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
         emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
         return _auctionId;
+        }
+        
+        else {
+            emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
+            emogramsOnAuction[_auctionId].highestBid = msg.value;
+
+            emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
+            return _auctionId;
+        }
     }
 
     function stepAuctions(address _tokenAddress, uint256 _startPrice)
