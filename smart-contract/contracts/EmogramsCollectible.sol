@@ -104,7 +104,6 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
             return emogramId;
     }
 
-    // TODO: Research batchMint solutions
     function createEmogramsCollection(uint256 _amount)
         public
         onlyRole(MINTER_ROLE)
@@ -131,6 +130,8 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
 
         receiver = beneficiary;
+
+        return(receiver, royaltyAmount);
     }
 
         function supportsInterface(bytes4 interfaceId)
