@@ -42,12 +42,21 @@ def main():
     print("Placing Bid")
     marketplace.PlaceBid(0, 3, emograms, {'from': accounts[1], 'amount': 11000000000000000000})
 
+    time.sleep(2)
+
+    marketplace.cancelAuction(0, 3, emograms)
+
+    marketplace.createAuction(4, emograms, 10, 10000000000000000000, {'from': accounts[0]})
+
+    marketplace.createAuction(5, emograms, 10, 10000000000000000000, {'from': accounts[0]})
+
+    marketplace.PlaceBid(2, 5, emograms, {'from': accounts[1], 'amount': 11000000000000000000})
+
     time.sleep(11)
 
-    tx = marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
-    print(tx.traceback())
-    print("Events")
-    print(tx.events)
+    marketplace.finishAuction(emograms, 4, 1, {'from': accounts[0]})
+    marketplace.finishAuction(emograms, 4, 2, {'from': accounts[0]})
+
 
 
 
