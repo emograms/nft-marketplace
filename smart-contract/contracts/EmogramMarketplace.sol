@@ -145,6 +145,44 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             grantRole(FOUNDER_ROLE, msg.sender);
         }
 
+    //Sell ID
+    //transfers royalty to receiver
+    //returns the amount to send to the seller and the seller
+    function sendRoyalty(uint256 _id) 
+    private 
+    returns(address, uint256) {
+
+        //Calculating royalty
+        (bool succes, bytes memory result) = emogramsOnSale[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnSale[_id].tokenId, emogramsOnSale[_id].price));
+        (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
+        uint256 toSend = msg.value - royAmount;
+
+        //Sending the royalty
+        (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
+        require(sent, "Failed to send royalty");
+
+        return (emogramsOnSale[_id].seller, toSend);
+
+    }
+
+    //Auction ID
+    //transfers royalty to receiver
+    //returns amount to send after royalty and highestbidder
+    function sendRoyaltyAuction(uint256 _id)
+    private
+    returns(address, uint256) {
+        //Calculating royalty
+        (bool succes, bytes memory result) = emogramsOnAuction[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnAuction[_id].tokenId, emogramsOnAuction[_id].highestBidder));
+        (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
+        uint256 toSend = msg.value - royAmount;
+
+        //Sending the royalty
+        (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
+        require(sent, "Failed to send royalty");
+
+        return (emogramsOnAuction[_id].highestBidder, toSend);
+    }
+
     // A function to add a new Emogram to the marketplace for sale
     function addEmogramToMarket(uint256 tokenId, address tokenAddress, uint256 askingPrice) 
     hasTransferApproval(tokenAddress, tokenId)
@@ -175,8 +213,12 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         emogramsOnSale[id].isSold = true;
         activeEmograms[emogramsOnSale[id].tokenAddress][emogramsOnSale[id].tokenId] = false;
         IERC1155(emogramsOnSale[id].tokenAddress).safeTransferFrom(emogramsOnSale[id].seller, msg.sender, emogramsOnSale[id].tokenId, 1, "");
-        (bool sent, bytes memory data) = emogramsOnSale[id].seller.call{value: msg.value}("");
-        require(sent, "Failed to buy");
+
+        (address receiver, uint256 toSend) = sendRoyalty(id);
+
+        //Sending the payment
+        (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
+        require(sentSucces, "Failed to buy");
 
         emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price);
     }
@@ -218,12 +260,13 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         }
 
         else {
-        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-        require(sent, "Failed to cancel");
-        activeAuctions[_tokenAddress][_tokenId] = false;
-        delete emogramsOnAuction[_auctionId];
 
-        emit AuctionCanceled(_auctionId, _tokenId, msg.sender, _tokenAddress);
+            (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
+            require(sent, "Failed to cancel");
+            activeAuctions[_tokenAddress][_tokenId] = false;
+            delete emogramsOnAuction[_auctionId];
+
+            emit AuctionCanceled(_auctionId, _tokenId, msg.sender, _tokenAddress);
         }
     }
 
@@ -248,7 +291,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
         return _auctionId;
         }
-        
+
         else {
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
@@ -290,8 +333,10 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
         require(emogramsOnAuction[_auctionId].highestBid != 0);
 
-        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].seller.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-        require(sent, "Failed the transaction");
+        (address receiver, uint256 toSend) = sendRoyaltyAuction(_auctionId);
+
+        (bool sentSucces, bytes memory dataReceived) = emogramsOnAuction[_auctionId].seller.call{value: toSend}("");
+        require(sentSucces, "Failed to cancel");
 
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
             
@@ -335,10 +380,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             return true;
         }
      }
-
-         function getBalance() public view returns (uint) {
-        return address(this).balance;
-         }
-
-        receive() external payable {}
+    
+    receive() external payable {}
 }

@@ -12,19 +12,39 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BENEFICIARY_UPGRADER_ROLE = keccak256("BENEFICIARY_UPGRADER_ROLE");
 
+    bytes4 constant ERC165ID = 0x01ffc9a7;
+    bytes4 constant ERC2981ID = "";
+
     // Royalty Base Percentage 7.5%
     // Royalty beneficiary address
     uint256 public BASE_PERCENTAGE = 750;
     address payable public beneficiary;
 
     // tokenId of the Fungible token, this won't change
-    uint8 public constant SRT = 1; 
+    uint8 public constant SRT = 1;
+    uint public constant maxEmogramNum = 99; 
 
     // Start Id of the Non-Fungible Emograms NFT
     // Since we want a collection of 99 NFTs, 
     // we need to increment this Id every time we mint 
     // a new Emogram NFT
     uint public emogramId = 2;
+
+    modifier notFullEmograms() {
+        require(emogramId <= maxEmogramNum, "Every emogram has been minted");
+        _;
+    }
+
+    modifier notYetMinted(uint256 _id) {
+        require(_id != 1 || _id <= 101, "This token has already been minted");
+        _;
+    }
+
+    //Checks if the operator supports the neccesary interfaces
+/*     modifier operatorImplementsRoyalty(address _op) {
+        require(_op.supportsInterface(ERC2981ID) && _op.supportsInterface(ERC165ID), "Does not support royalty interface");
+        _;
+    } */
 
     event FungibleTokenMinted(address indexed _minter, uint256 indexed _tokenId, uint256 _amount);
     event NonFungibleTokenMinted(address indexed _minter, uint256 indexed _tokenid);
@@ -84,52 +104,57 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
          return (_amount, _tokenId);
     }
 
-    function createEmogram() 
-        public 
-        onlyRole(MINTER_ROLE) 
-        returns (uint256) {
+    function createSRT()
+    public
+    notFullEmograms()
+    notYetMinted(1)
+    onlyRole(MINTER_ROLE)
+    returns (bool) {
 
-            mint(msg.sender, emogramId, 1, "");
-            emit NonFungibleTokenMinted(msg.sender, emogramId);
-            emogramId = emogramId + 1;
-            return emogramId;
+        mint(msg.sender, 1, 110, "");
+        return true;
+    }
+
+    function createEmogram() 
+    public
+    notFullEmograms() 
+    onlyRole(MINTER_ROLE) 
+    returns (uint256) {
+
+        mint(msg.sender, emogramId, 1, "");
+        emit NonFungibleTokenMinted(msg.sender, emogramId);
+        emogramId = emogramId + 1;
+        return emogramId;
     }
 
     function createEmogramsCollection(uint256 _amount)
-        public
-        onlyRole(MINTER_ROLE)
-        returns (uint256) {
+    public
+    notFullEmograms()
+    onlyRole(MINTER_ROLE)
+    returns (uint256) {
 
-            for(uint j = emogramId; j <= _amount; j++) {
-                createEmogram();
-            }
+        for(uint j = emogramId; j <= _amount; j++) {
+            createEmogram();
         }
-
-    function ceil(uint a, uint m)
-        internal
-        view 
-        returns (uint) {
-            return ((a + m - 1) / m) * m;
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
-        external
-        view 
-        returns (address receiver, uint256 royaltyAmount) {
+    external
+    view 
+    returns (address receiver, uint256 royaltyAmount) {
         
-        uint256 roundValue = ceil(_salePrice, BASE_PERCENTAGE);
-        uint256 royaltyAmount = SafeMath.div(SafeMath.mul(roundValue, BASE_PERCENTAGE), 10000);
+        uint256 royaltyAmount = SafeMath.div(SafeMath.mul(_salePrice, BASE_PERCENTAGE), 10000);
 
         receiver = beneficiary;
 
         return(receiver, royaltyAmount);
     }
 
-        function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC1155, AccessControl)
-        returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(ERC1155, AccessControl)
+    returns (bool) {
         
         return super.supportsInterface(interfaceId);
     }

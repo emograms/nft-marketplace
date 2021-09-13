@@ -59,6 +59,8 @@ def main():
     time.sleep(11)
     marketplace.finishAuction(emograms, 4, 1, {'from': accounts[0]})
 
+    print("FounderVault Balance: ", foundervault.balance())
+
     print('----Auction create & finish w/ bid----')
     print("Creating auction eid#5")
     marketplace.createAuction(
