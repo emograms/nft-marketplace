@@ -303,7 +303,6 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
 
     function stepAuctions(address _tokenAddress, uint256 _startPrice)
     isInitialAuctionPeriod()
-    nonReentrant()
     onlyRole(FOUNDER_ROLE)
     payable
     external
