@@ -152,10 +152,12 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     private 
     returns(address, uint256) {
 
+        require(msg.value > 0, "No Ether sent");
+        
         //Calculating royalty
         (bool succes, bytes memory result) = emogramsOnSale[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnSale[_id].tokenId, emogramsOnSale[_id].price));
         (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
-        uint256 toSend = msg.value - royAmount;
+        uint256 toSend = SafeMath.sub(msg.value,royAmount);
 
         //Sending the royalty
         (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
@@ -171,10 +173,14 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     function sendRoyaltyAuction(uint256 _id)
     private
     returns(address, uint256) {
+
         //Calculating royalty
-        (bool succes, bytes memory result) = emogramsOnAuction[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnAuction[_id].tokenId, emogramsOnAuction[_id].highestBidder));
+        (bool succes, bytes memory result) = emogramsOnAuction[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnAuction[_id].tokenId, emogramsOnAuction[_id].highestBid));
         (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
-        uint256 toSend = msg.value - royAmount;
+        require(emogramsOnAuction[_id].highestBid != 0, "No Bid!");
+        require(royAmount != 0, "No royalty");
+        require(emogramsOnAuction[_id].highestBid > royAmount, "Bid lower than royalty");
+        uint256 toSend = emogramsOnAuction[_id].highestBid - royAmount;
 
         //Sending the royalty
         (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
@@ -320,9 +326,9 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             }
         }
 
-        for(uint256 i = initialEmogramsorder.length; i > initialEmogramsorder.length - 3; i--) {
+        for(uint256 i = initialEmogramsorder.length - 1; i > initialEmogramsorder.length - 4; i--) {
 
-            createAuction(i, _tokenAddress, 3, _startPrice);
+            createAuction(i+2, _tokenAddress, 3, _startPrice);
             delete initialEmogramsorder[i];
         }
 

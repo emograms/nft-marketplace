@@ -143,11 +143,12 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     view 
     returns (address receiver, uint256 royaltyAmount) {
 
+        uint256 royaltyAmount = 0;
         if(_salePrice > 1e76) {
-                uint256 royaltyAmount = SafeMath.mul(SafeMath.div(_salePrice,10000),BASE_PERCENTAGE);
+                royaltyAmount = SafeMath.mul(SafeMath.div(_salePrice,10000),BASE_PERCENTAGE);
         }
         else {
-                uint256 royaltyAmount = SafeMath.div(SafeMath.mul(_salePrice, BASE_PERCENTAGE),10000);
+                royaltyAmount = SafeMath.div(SafeMath.mul(_salePrice, BASE_PERCENTAGE),10000);
         }
 
         receiver = beneficiary;
