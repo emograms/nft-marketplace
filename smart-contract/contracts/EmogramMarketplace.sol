@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
+ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
 
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");

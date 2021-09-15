@@ -3,7 +3,7 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-abstract contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
+contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
 
     //can upgrade to new implementation
 
@@ -17,12 +17,10 @@ abstract contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
         _setupRole(UPGRADER_ROLE, upgrader); 
     }
 
-    function authorizeUpgrade(address _newImplementation)
-        internal 
-        onlyRole(UPGRADER_ROLE) {
-        
-        _authorizeUpgrade(_newImplementation);
-    }
+    function _authorizeUpgrade(address _newImplementation)
+        internal
+        override 
+        onlyRole(UPGRADER_ROLE) {}
 
     function changeUpgrader(address _newUpgradee) 
         public 
