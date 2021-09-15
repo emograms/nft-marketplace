@@ -221,6 +221,8 @@ def test_initial_auction():
     random.shuffle(initial_order)
     assert len(initial_order) == 99
     marketplace.setInitialorder(initial_order)
+    for idx, id in enumerate(initial_order):
+        assert marketplace.initialEmogramsorder(idx) == id
     
     emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
@@ -228,15 +230,20 @@ def test_initial_auction():
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[3]})
 
-    #for day in initial_auction_prices:
+    for idx, day in enumerate(initial_auction_prices[:5]):
+        price = initial_auction_prices[idx]
+        marketplace.stepAuctions(emograms, price)
+        for i in range(idx, idx+3):
+            tx = marketplace.emogramsOnAuction(i)
+            assert tx['onAuction'] == True
+            assert tx['tokenId'] == initial_order[idx+i]
+            assert tx['startPrice'] == day
         
 
-       
-
-    
-    
 '''
 Todo:
 - proxy implementation and upgradability checks
 - mint all emograms, put up 3 for initial auction, bid for 2 and leave 1 unbidded, call stepAuction to close and repeate 
+- initialAuctionFinished event
+- event checks in all function
 '''
