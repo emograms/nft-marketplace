@@ -397,6 +397,14 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
         }
      }
 
+    function setPeriod(bool _isTest)
+    onlyRole(FOUNDER_ROLE)
+    public
+    returns (bool) {
+        isTestPeriod = _isTest;
+        return isTestPeriod;
+    }
+
     function supportsInterface(bytes4 interfaceId)
      public
      view
