@@ -5,15 +5,18 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
+//TODO: Token burn
+
+contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165Storage {
 
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BENEFICIARY_UPGRADER_ROLE = keccak256("BENEFICIARY_UPGRADER_ROLE");
 
     bytes4 constant ERC165ID = 0x01ffc9a7;
-    bytes4 constant ERC2981ID = "";
+    bytes4 constant ERC2981ID = 0x2a55205a;
 
     // Royalty Base Percentage 7.5%
     // Royalty beneficiary address
@@ -30,6 +33,11 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     // a new Emogram NFT
     uint public emogramId = 2;
 
+
+    //If the token indentified by id is redeemable this is true,
+    //if the id was redeemed, it is false
+    mapping(uint256 => bool) public redeemAble;
+
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
         _;
@@ -42,9 +50,18 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
 
     //Checks if the operator supports the neccesary interfaces
 /*     modifier operatorImplementsRoyalty(address _op) {
-        require(_op.supportsInterface(ERC2981ID) && _op.supportsInterface(ERC165ID), "Does not support royalty interface");
+
+        (bool succes, bytes memory result) = _op.call(abi.encodeWithSignature("supportsInterface(bytes4)", ERC2981ID));
+        bool implementsInterface2981 = abi.decode(result, (bool));
+
+        require(implementsInterface2981 == true, "Does not support royalty interface");
         _;
     } */
+
+    modifier onlyOwner(uint256 _tokenId, address _maybeOwner) {
+        require(ownerOf(_tokenId, _maybeOwner), "Not the owner");
+        _;
+    }
 
     event FungibleTokenMinted(address indexed _minter, uint256 indexed _tokenId, uint256 _amount);
     event NonFungibleTokenMinted(address indexed _minter, uint256 indexed _tokenid);
@@ -57,6 +74,9 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         _setupRole(MINTER_ROLE, msg.sender);
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
         beneficiary = payable(msg.sender);
+
+        _registerInterface(ERC165ID);
+        _registerInterface(ERC2981ID);
     }
 
     function setURI(string memory newuri) 
@@ -84,6 +104,14 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
         onlyRole(MINTER_ROLE) {
         
         _mintBatch(to, ids, amounts, data);
+    }
+
+    function setRedeemAble()
+    onlyRole(MINTER_ROLE)
+    public {
+        for(uint i = 0; i < emogramId; i++) {
+            redeemAble[i] = true;
+        }
     }
 
     function setBeneficiary(address payable  _newBeneficiary)
@@ -123,6 +151,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
 
         mint(msg.sender, emogramId, 1, "");
         emit NonFungibleTokenMinted(msg.sender, emogramId);
+        redeemAble[emogramId] = true;
         emogramId = emogramId + 1;
         return emogramId;
     }
@@ -143,7 +172,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
     view 
     returns (address receiver, uint256 royaltyAmount) {
 
-        uint256 royaltyAmount = 0;
+        uint256 royaltyAmount;
         if(_salePrice > 1e76) {
                 royaltyAmount = SafeMath.mul(SafeMath.div(_salePrice,10000),BASE_PERCENTAGE);
         }
@@ -155,11 +184,30 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable {
 
         return(receiver, royaltyAmount);
     }
+/* 
+    function setApprovalForAll(address _operator, bool _approved)
+    public
+    override(ERC1155) {
+
+        setApprovalForAll(_operator, _approved);
+    } */
+
+    //function burn(address account, uint256 id, uint256 amount) {}
+
+    function redeemSculp(uint256 _tokenId)
+    onlyOwner(_tokenId, msg.sender)
+    public {
+            require(redeemAble[_tokenId] == true, "This Sculpture has already been redeemed");
+            require(balanceOf(msg.sender, SRT) >= 9, "Not enough SRT token to redeem");
+
+    }
+
+    function verifyOrig() public {}
 
     function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC1155, AccessControl)
+    override(ERC1155, AccessControl, ERC165Storage)
     returns (bool) {
         
         return super.supportsInterface(interfaceId);

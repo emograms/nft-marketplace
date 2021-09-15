@@ -4,6 +4,11 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+//TODO: Pullpayment, splitpayment from OZ
+//      ERC1155 Holder
+//      register interfaces
+
+
 contract FounderVault is AccessControl, ReentrancyGuard {
 
     uint256 totalContents;
@@ -43,7 +48,7 @@ contract FounderVault is AccessControl, ReentrancyGuard {
 
         require(totalContents == address(this).balance, "Balance inconsistent!");
         require(totalContents != 0, "Vault empty!");
-        
+
         for(uint i = 0; i < Founders.length; i++) {
             uint256 toPay = SafeMath.div(SafeMath.mul(totalContents, Percentages[Founders[i]]), 10000);
 
