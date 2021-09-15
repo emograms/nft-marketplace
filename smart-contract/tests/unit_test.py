@@ -72,6 +72,7 @@ def test_minting():
 def test_fixed_buy():
     '''
     Minting an NFT, approving marketplace, selling on fixed price and buying
+    Reselling the bought NFT and checking royalty amounts
     '''
     seller_init_balance = accounts[0].balance()
     sell_price = 1e18
@@ -86,6 +87,31 @@ def test_fixed_buy():
 
     assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 1
     assert accounts[0].balance() == seller_init_balance + sell_price
+
+    # Royalty checks
+    royalty_pct = 0.075
+    seller_init_balance_1 = accounts[0].balance()
+    seller_init_balance_2 = accounts[1].balance()
+    buyer_init_balance_1 = accounts[2].balance()
+    sell_price = 1e18
+
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
+    marketplace.addEmogramToMarket(
+        2, emograms, sell_price, {'from': accounts[1]})
+    marketplace.buyEmogram(
+        1, {'from': accounts[2], 'amount': sell_price})
+
+    # Token balance checks
+    assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[2], 2, {'from': accounts[0]}) == 1
+
+    # ETH balance checks
+    assert accounts[0].balance() == seller_init_balance_1 + sell_price*royalty_pct
+    assert accounts[1].balance() == seller_init_balance_2 + sell_price - sell_price*royalty_pct
+    assert accounts[2].balance() == buyer_init_balance_1 - sell_price
+
 
 
 def test_auction_cancel():
@@ -113,6 +139,7 @@ def test_auction_buy_finish():
     
     '''
     auction_time = 5
+    royalty_pct = 0.075
     seller_init_balance_1 = accounts[0].balance()
     seller_init_balance_2 = accounts[1].balance()
     buyer_init_balance_1 = accounts[2].balance()
@@ -130,12 +157,8 @@ def test_auction_buy_finish():
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[3]})
 
-    # Transfer emograms to account[1] for free
-    marketplace.addEmogramToMarket(
-        2, emograms, 0, {'from': accounts[0]})
-    marketplace.buyEmogram(
-        0, {'from': accounts[1], 'amount': 0})  
-    
+    # Transfer emogram[2] to account[1]
+    emograms.safeTransferFrom(accounts[0], accounts[1], 2, 1, '')
     # Create auctions
     # account[0] - 1,3
     # account[1] - 0,2
@@ -158,18 +181,18 @@ def test_auction_buy_finish():
     
     # Wait for endDate and finish auctions
     time.sleep(auction_time+1)
-    marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
+    tx = marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
     marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
     
+    # Token balance checks
     assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[2], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[3], 2, {'from': accounts[0]}) == 1
 
-    print('mktplace balance: ', marketplace.balance()/1e18)
-
-    assert accounts[0].balance() == seller_init_balance_1
-    assert accounts[1].balance() == seller_init_balance_2 + bid_price_2
+    # ETH balance checks
+    assert accounts[0].balance() == seller_init_balance_1 + bid_price_2*royalty_pct
+    assert accounts[1].balance() == seller_init_balance_2 + bid_price_2 - bid_price_2*royalty_pct
     assert accounts[2].balance() == buyer_init_balance_1
     assert accounts[3].balance() == buyer_init_balance_2 - bid_price_2
 
@@ -214,5 +237,6 @@ def test_initial_auction():
     
 '''
 Todo:
+- proxy implementation and upgradability checks
 - mint all emograms, put up 3 for initial auction, bid for 2 and leave 1 unbidded, call stepAuction to close and repeate 
 '''
