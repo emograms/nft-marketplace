@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
 //TODO: Token burn
@@ -49,14 +50,14 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     }
 
     //Checks if the operator supports the neccesary interfaces
-/*     modifier operatorImplementsRoyalty(address _op) {
+    modifier operatorImplementsRoyalty(address _op) {
 
         (bool succes, bytes memory result) = _op.call(abi.encodeWithSignature("supportsInterface(bytes4)", ERC2981ID));
         bool implementsInterface2981 = abi.decode(result, (bool));
 
         require(implementsInterface2981 == true, "Does not support royalty interface");
         _;
-    } */
+    }
 
     modifier onlyOwner(uint256 _tokenId, address _maybeOwner) {
         require(ownerOf(_tokenId, _maybeOwner), "Not the owner");
@@ -184,13 +185,14 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
 
         return(receiver, royaltyAmount);
     }
-/* 
+ 
     function setApprovalForAll(address _operator, bool _approved)
+    operatorImplementsRoyalty(_operator)
     public
     override(ERC1155) {
 
-        setApprovalForAll(_operator, _approved);
-    } */
+        super.setApprovalForAll(_operator, _approved);
+    } 
 
     //function burn(address account, uint256 id, uint256 amount) {}
 
