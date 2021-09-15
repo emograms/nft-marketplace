@@ -3,13 +3,13 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 //TODO: Pullpayment, splitpayment from OZ
-//      ERC1155 Holder
 //      register interfaces
 
 
-contract FounderVault is AccessControl, ReentrancyGuard {
+contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
 
     uint256 totalContents;
     
@@ -96,6 +96,15 @@ contract FounderVault is AccessControl, ReentrancyGuard {
     returns (bool) {
 
         return (totalContents == address(this).balance);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(ERC1155Receiver, AccessControl)
+    returns (bool) {
+        
+        return super.supportsInterface(interfaceId);
     }
 
     receive() 

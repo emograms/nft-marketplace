@@ -8,9 +8,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-//TODO: register interfaces
-
-
 contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
 
 
@@ -18,6 +15,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
 
     bytes4 constant ERC2981ID = 0x2a55205a;
 
+    bool isTestPeriod;
     bool public isInitialAuction = true;
 
     // Struct for a fixed price sell
@@ -129,12 +127,13 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
         _;
     }
 
-    constructor() payable {
+    constructor(bool _isTest) payable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
 
         _registerInterface(ERC2981ID);
+        isTestPeriod = _isTest;
     }
 
     function setInitialorder(uint256[99] memory ids) 
@@ -241,7 +240,15 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
-        uint256 durationToDays = block.timestamp + _duration; //TODO: actually in secs
+        uint256 durationToDays;
+
+        if(isTestPeriod == true) {
+            durationToDays = block.timestamp + _duration; //TODO: actually in secs
+        }
+        else {
+            durationToDays = block.timestamp + _duration * 1 days;
+         }
+
         emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, _startPrice, durationToDays, true));
         activeAuctions[_tokenAddress][_tokenId] = true;
 

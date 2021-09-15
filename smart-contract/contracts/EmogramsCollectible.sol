@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-//TODO: Token burn
-
 contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165Storage {
 
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
