@@ -337,9 +337,9 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
             }
         }
 
-        for(uint256 i = initialEmogramsorder.length - 1; i > initialEmogramsorder.length - 4; i--) {
+        for(uint256 i = initialEmogramsorder.length; i < initialEmogramsorder.length - 3; i--) {
 
-            createAuction(i+2, _tokenAddress, 3, _startPrice);
+            createAuction(initialEmogramsorder[i], _tokenAddress, 3, _startPrice);
             delete initialEmogramsorder[i];
         }
 
