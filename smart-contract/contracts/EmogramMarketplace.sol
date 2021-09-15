@@ -60,7 +60,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
     auctionItem[] public emogramsOnAuction;
 
     //The order of the emograms during the initial auction period
-    uint256[99] public initialEmogramsorder;
+    uint256[99] private initialEmogramsorder;
 
     // Emograms in the marketplace currently up for sale or auction
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
