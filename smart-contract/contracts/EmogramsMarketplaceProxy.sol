@@ -10,11 +10,18 @@ contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
     bytes32 public UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     address public upgrader;
 
-    constructor(address _upgrader) {
+    constructor(address _upgrader, address initialImplementation) {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         upgrader = _upgrader;
-        _setupRole(UPGRADER_ROLE, upgrader); 
+        _setupRole(UPGRADER_ROLE, upgrader);
+        _upgradeTo(initialImplementation); 
+    }
+
+    function upgradeImplementation(address addr) 
+        public
+        onlyRole(UPGRADER_ROLE) {
+        _upgradeTo(addr);
     }
 
     function _authorizeUpgrade(address _newImplementation)
