@@ -8,7 +8,7 @@ def main():
     print("Active Network: ")
     print(network.show_active() + "\n")
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
     foundervault = FounderVault.deploy(accounts[0:5], [20, 20, 30, 15, 15], {'from': accounts[0]})
 
     print("Contracts deployed\n")

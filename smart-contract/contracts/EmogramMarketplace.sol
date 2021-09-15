@@ -6,12 +6,16 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
-contract EmogramMarketplace is AccessControl, ReentrancyGuard {
+contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
 
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
 
+    bytes4 constant ERC2981ID = 0x2a55205a;
+
+    bool isTestPeriod;
     bool public isInitialAuction = true;
 
     // Struct for a fixed price sell
@@ -123,10 +127,13 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         _;
     }
 
-    constructor() payable {
+    constructor(bool _isTest) payable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
+
+        _registerInterface(ERC2981ID);
+        isTestPeriod = _isTest;
     }
 
     function setInitialorder(uint256[99] memory ids) 
@@ -152,12 +159,10 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     private 
     returns(address, uint256) {
 
-        require(msg.value > 0, "No Ether sent");
-        
         //Calculating royalty
         (bool succes, bytes memory result) = emogramsOnSale[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnSale[_id].tokenId, emogramsOnSale[_id].price));
         (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
-        uint256 toSend = SafeMath.sub(msg.value,royAmount);
+        uint256 toSend = SafeMath.sub(emogramsOnSale[_id].price,royAmount);
 
         //Sending the royalty
         (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
@@ -177,9 +182,7 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
         //Calculating royalty
         (bool succes, bytes memory result) = emogramsOnAuction[_id].tokenAddress.call(abi.encodeWithSignature("royaltyInfo(uint256,uint256)", emogramsOnAuction[_id].tokenId, emogramsOnAuction[_id].highestBid));
         (address receiver, uint256 royAmount) = abi.decode(result, (address, uint256));
-        require(emogramsOnAuction[_id].highestBid != 0, "No Bid!");
-        require(royAmount != 0, "No royalty");
-        require(emogramsOnAuction[_id].highestBid > royAmount, "Bid lower than royalty");
+
         uint256 toSend = emogramsOnAuction[_id].highestBid - royAmount;
 
         //Sending the royalty
@@ -237,7 +240,15 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
-        uint256 durationToDays = block.timestamp + _duration; //TODO: actually in secs
+        uint256 durationToDays;
+
+        if(isTestPeriod == true) {
+            durationToDays = block.timestamp + _duration; //TODO: actually in secs
+        }
+        else {
+            durationToDays = block.timestamp + _duration * 1 days;
+         }
+
         emogramsOnAuction.push(auctionItem(emogramsOnAuction.length, _tokenAddress, _tokenId, payable(msg.sender), payable(msg.sender), _startPrice, _startPrice, durationToDays, true));
         activeAuctions[_tokenAddress][_tokenId] = true;
 
@@ -385,6 +396,15 @@ contract EmogramMarketplace is AccessControl, ReentrancyGuard {
             return true;
         }
      }
+
+    function supportsInterface(bytes4 interfaceId)
+     public
+     view
+     override(AccessControl, ERC165Storage)
+     returns (bool) {
+        
+        return super.supportsInterface(interfaceId);
+    }
     
     receive() external payable {}
 }
