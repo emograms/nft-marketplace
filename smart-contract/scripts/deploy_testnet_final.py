@@ -2,15 +2,18 @@ import os
 import time
 from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, FounderVault, accounts, network
 
+# VARS
 INITIAL_AUCTION_DURATION = 90
-PRIVATE_KEY_GOERLI_MIKI = '0x0'
-PRIVATE_KEY_GOERLI_CSONGOR = '0x0'
-PRIVATE_KEY_GOERLI_PATR = '0x0'
-PRIVATE_KEY_GOERLI_ADR = '0x0'
-PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'
 IPFS_URI = 'https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json'
 
-def deploy_network(withProxy=True):
+# WALLETS
+PRIVATE_KEY_GOERLI_MIKI = '3a8bb854c7a86d950c0d3e0b5b1bbcd3912389a95fa530e46c911fe1de099808' #'0xFe594E862c3ce76E192997EABFC41Afd7C975b52'
+PRIVATE_KEY_GOERLI_CSONGOR = '7890e57df5d235ca4a5065341467d18276293f7066bf96e7e9a88c6f89737c67' #'0x76cA42252508c0AD52bf7936dC3eabb82cF9872e'
+PRIVATE_KEY_GOERLI_PATR = 'fd290876475f82321cb0c142893c150fda939e9a3a3360715456f734eaef8831' #'0xE7E8FB1932084E3BbE382EbaCdc16D835B30216F'
+PRIVATE_KEY_GOERLI_ADR = '5ffe2515807d0ace67c342183c6aa506f25553d7fa0e93ceeb4d9b77b55128a2' #'0xA558c9148846F17AcD9E99D8a8D0D1ECdCf0c7fA'
+PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'
+
+def deploy_network(withProxy=True, testMode=False):
     print("Active Network: ")
     print(network.show_active() + "\n")
 
@@ -19,11 +22,11 @@ def deploy_network(withProxy=True):
     CSONGOR = accounts.add(PRIVATE_KEY_GOERLI_CSONGOR)
     PATR = accounts.add(PRIVATE_KEY_GOERLI_PATR)
     ADR = accounts.add(PRIVATE_KEY_GOERLI_ADR)
-    DEPLOYER = accounts.add(DEPLOYER_PRIVATE_KEY_GOERLI)
+    DEPLOYER = accounts.add(PRIVATE_KEY_GOERLI_DEPLOYER)
 
     # Deploying contracts
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy(testMode, {'from': accounts[0]})
     if withProxy:
         marketplace = EmogramsMarketplaceProxy.deploy()
 
@@ -34,6 +37,9 @@ def deploy_network(withProxy=True):
     vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
     
     print("Contracts deployed on:", network.show_active())
+
+    # Set beneficiary on EmogramsCollectible
+    emograms.setBeneficiary(vault)
 
     # Minting Emogram NFT tokens
     mint_token_ids = list(range(2, 101))
@@ -62,6 +68,8 @@ def deploy_network(withProxy=True):
 
 def distribute_few_tokens():
     print('Distributing tokens to MIKI, CSONGOR, PATR, ADR...')
+
+    # Emogram Tokens
     emograms.safeTransferFrom(DEPLOYER, MIKI, 2, 1, '')
     emograms.safeTransferFrom(DEPLOYER, MIKI, 3, 1, '')
     emograms.safeTransferFrom(DEPLOYER, CSONGOR, 4, 1, '')
@@ -70,6 +78,12 @@ def distribute_few_tokens():
     emograms.safeTransferFrom(DEPLOYER, PATR, 7, 1, '')
     emograms.safeTransferFrom(DEPLOYER, ADR, 8, 1, '')
     emograms.safeTransferFrom(DEPLOYER, ADR, 9, 1, '')
+
+    # SRT Tokens
+    emograms.safeTransferFrom(DEPLOYER, MIKI, 1, 2, '')
+    emograms.safeTransferFrom(DEPLOYER, CSONGOR, 1, 2, '')
+    emograms.safeTransferFrom(DEPLOYER, PATR, 1, 2, '')
+    emograms.safeTransferFrom(DEPLOYER, ADR, 1, 2, '')
 
 
 def run_initialAuction():
