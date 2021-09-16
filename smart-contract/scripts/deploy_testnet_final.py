@@ -42,7 +42,7 @@ def deploy_network(withProxy=True):
     for i in mint_token_ids:
         print("ids minted: ", i)
 
-    # Checking total number of Emogram tokens number
+    # Checking total of Emogram tokens number
     y = 0
     for x in range(0, 101):
         if(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}) != 0):

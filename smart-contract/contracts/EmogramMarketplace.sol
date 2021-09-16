@@ -232,6 +232,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     external 
     returns(uint256) {
         require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
+        require(activeAuctions[tokenAddress][tokenId] == false, "Item already up for auction");
         uint256 newItemId = emogramsOnSale.length;
         emogramsOnSale.push(sellItem(newItemId, tokenAddress, tokenId, payable(msg.sender), askingPrice, false));
         activeEmograms[tokenAddress][tokenId] = true;
@@ -283,6 +284,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
+        require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
