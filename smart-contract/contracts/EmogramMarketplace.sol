@@ -363,7 +363,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         }
     }
 
-    function stepAuctions(address _tokenAddress, uint256 _startPrice)
+    function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
     isInitialAuctionPeriod()
     onlyRole(FOUNDER_ROLE)
     payable
@@ -384,7 +384,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
         for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
 
-            createAuction(initialEmogramsorder[i], _tokenAddress, 3, _startPrice);
+            createAuction(initialEmogramsorder[i], _tokenAddress, _duration, _startPrice);
         }
 
         initialAuction.cycle = initialAuction.cycle + 1;
