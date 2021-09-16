@@ -7,6 +7,7 @@ PRIVATE_KEY_GOERLI_CSONGOR = '0x0'
 PRIVATE_KEY_GOERLI_PATR = '0x0'
 PRIVATE_KEY_GOERLI_ADR = '0x0'
 PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'
+IPFS_URI = 'https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json'
 
 def deploy_network(withProxy=True):
     print("Active Network: ")
@@ -39,10 +40,17 @@ def deploy_network(withProxy=True):
     emograms.mintBatch(accounts[0], mint_token_ids, mint_amounts, "")
 
     for i in mint_token_ids:
+        print("ids minted: ", i)
 
+    # Checking total number of Emogram tokens number
+    y = 0
+    for x in range(0, 101):
+        if(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}) != 0):
+            y = y + emograms.balanceOf(accounts[0], x, {'from': accounts[0]})
+    print("Total emograms minted: ", y)
 
     # setURI for IPFS hashes
-
+    emograms.setURI(IPFS_URI, {'from': accounts[0]})
 
     # Approve addreses
     emograms.setApprovalForAll(marketplace, True, {'from': MIKI})

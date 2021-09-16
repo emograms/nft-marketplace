@@ -1,6 +1,8 @@
 import time
+from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accounts, network
 
 auction_time = 15
+dev = accounts.load(0)
 print(accounts[0].balance())
 
 emograms = EmogramsCollectible.deploy({'from': accounts[0]})
