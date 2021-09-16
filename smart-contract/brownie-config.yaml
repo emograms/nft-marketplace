@@ -1,5 +1,6 @@
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.3.0
+  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.0
 compiler:
   solc:
     remappings:
