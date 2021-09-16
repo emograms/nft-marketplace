@@ -78,7 +78,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     // Check if the caller is actually the owner
     modifier isTheOwner(address _tokenAddress, uint256 _tokenId, address _owner) {
         IERC1155 tokenContract = IERC1155(_tokenAddress);
-        require(tokenContract.balanceOf(_owner, _tokenId) != 0);
+        require(tokenContract.balanceOf(_owner, _tokenId) != 0, "Not owner");
         _;
     }
 
