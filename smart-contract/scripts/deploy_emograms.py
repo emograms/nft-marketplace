@@ -3,6 +3,12 @@ import time
 from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accounts, network
 
 
+"""
+TODO
+
+"""
+
+
 def main():
     dev = accounts.load(0)
     print("Active Network: ")

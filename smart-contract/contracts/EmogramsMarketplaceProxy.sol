@@ -18,12 +18,6 @@ contract EmogramsMarketplaceProxy is UUPSUpgradeable, AccessControl {
         _upgradeTo(initialImplementation); 
     }
 
-    function upgradeImplementation(address addr) 
-        public
-        onlyRole(UPGRADER_ROLE) {
-        _upgradeTo(addr);
-    }
-
     function _authorizeUpgrade(address _newImplementation)
         internal
         override 
