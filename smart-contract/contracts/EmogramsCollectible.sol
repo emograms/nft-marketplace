@@ -36,6 +36,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     //If the token indentified by id is redeemable this is true,
     //if the id was redeemed, it is false
     mapping(uint256 => bool) public redeemAble;
+    mapping(uint256 => bytes32) public originalityHash;
 
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
@@ -63,6 +64,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     }
 
     event FungibleTokenMinted(address indexed _minter, uint256 indexed _tokenId, uint256 _amount);
+    event SculptureRedeemed(uint256 indexed _tokenId, address indexed _redeemer);
     event NonFungibleTokenMinted(address indexed _minter, uint256 indexed _tokenid);
     event BeneficiaryChanged(address indexed _newBeneficiary);
 
@@ -82,6 +84,14 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         public 
         onlyRole(URI_SETTER_ROLE) {
         _setURI(newuri);
+    }
+
+    function setOrigHash(bytes32[] memory _hashes)
+    onlyRole(MINTER_ROLE)
+    public {
+        for(uint i = 2; i < _hashes.length + 1; i++) {
+            originalityHash[i] = _hashes[i-2];
+        }
     }
 
     function ownerOf(uint256 _tokenId, address _maybeOwner)
@@ -200,9 +210,20 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
             require(redeemAble[_tokenId] == true, "This Sculpture has already been redeemed");
             require(balanceOf(msg.sender, SRT) >= 9, "Not enough SRT token to redeem");
 
+            redeemAble[_tokenId] = false;
+            emit SculptureRedeemed(_tokenId, msg.sender);
     }
 
-    function verifyOrig() public {}
+    function verifyOrig(string memory _origString, uint256 _tokenId)
+     public 
+     returns (bool) {
+         if(keccak256(abi.encodePacked(_origString)) == originalityHash[_tokenId]) {
+             return true;
+         }
+         else {
+             return false;
+         }
+     }
 
     function supportsInterface(bytes4 interfaceId)
     public

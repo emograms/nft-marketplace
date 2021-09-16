@@ -384,6 +384,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
         if(initialAuction.cycle >= 33) {
             initialAuction.isInitialAuction = false;
+            emit InitialAuctionFinished();
         }
 
      }
