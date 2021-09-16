@@ -1,15 +1,15 @@
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelinUpgrades/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelinUpgrades/contracts/proxy/utils/UUPSUpgradeable.sol";
+//import "@openzeppelinUpgrades/contracts/proxy/utils/Initializable.sol";
+//import "@openzeppelinUpgrades/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
- contract EmogramMarketplace is AccessControlUpgradeable, ReentrancyGuard, UUPSUpgradeable, Initializable, ERC165Storage {
+ contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
 
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
@@ -137,9 +137,18 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
-    constructor() initializer {}
+    constructor(bool _isTest) {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(FOUNDER_ROLE, msg.sender);
 
-    function initialize(bool _isTest) initializer public {
+        _registerInterface(ERC2981ID);
+        isTestPeriod = _isTest;
+
+        initialAuction.isInitialAuction = true;
+        initialAuction.cycle = 0;
+    }
+
+/*     function initialize(bool _isTest) initializer public {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -152,7 +161,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         initialAuction.isInitialAuction = true;
         initialAuction.cycle = 0;
     }
-
+ */
     function setInitialorder(uint256[99] memory _ids) 
      public
      onlyRole(FOUNDER_ROLE) {
