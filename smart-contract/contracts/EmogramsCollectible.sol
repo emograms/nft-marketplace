@@ -32,6 +32,8 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     // a new Emogram NFT
     uint public emogramId = 2;
 
+    mapping(uint256 => address) public ownerOfById;
+
 
     //If the token indentified by id is redeemable this is true,
     //if the id was redeemed, it is false
@@ -105,6 +107,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         public
         onlyRole(MINTER_ROLE) {
         
+        ownerOfById[id] = account;
         _mint(account, id, amount, data);
     }
 
@@ -113,6 +116,13 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         onlyRole(MINTER_ROLE) {
         
         _mintBatch(to, ids, amounts, data);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) 
+     public 
+     override(ERC1155) {
+        super.safeTransferFrom(from, to, id, amount, data);
+        ownerOfById[id] = to;
     }
 
     function setRedeemAble()
