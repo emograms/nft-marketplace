@@ -2,6 +2,7 @@ import os
 import time
 from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, FounderVault, accounts, network
 
+INITIAL_AUCTION_DURATION = 90
 PRIVATE_KEY_GOERLI_MIKI = '0x0'
 PRIVATE_KEY_GOERLI_CSONGOR = '0x0'
 PRIVATE_KEY_GOERLI_PATR = '0x0'
@@ -42,7 +43,7 @@ def deploy_network(withProxy=True):
     for i in mint_token_ids:
         print("ids minted: ", i)
 
-    # Checking total number of Emogram tokens number
+    # Checking total of Emogram tokens number
     y = 0
     for x in range(0, 101):
         if(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}) != 0):
@@ -60,6 +61,21 @@ def deploy_network(withProxy=True):
     emograms.setApprovalForAll(marketplace, True, {'from': DEPLOYER})
 
 def run_initialAuction():
-    
 
+    # Setting initial prices 0.01 -> 0.1
+    initial_auction_prices = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
+    for i in range(0, 33-len(initial_auction_prices)):
+        initial_auction_prices.append(0.1)
+    assert len(initial_auction_prices) == 33
+    
+    # Setting initial order 
+    initial_order = [x for x in range(2,101)]
+    random.shuffle(initial_order)
+    assert len(initial_order) == 99
+    marketplace.setInitialorder(initial_order)
+
+    # Start iterating over initial auction cycles
+    for idx, price in enumerate(initial_auction_prices):        
+        print('Auction cycle #%s' %(idx))
+        marketplace.stepAuctions(emograms, price, INITIAL_AUCTION_DURATION)
 

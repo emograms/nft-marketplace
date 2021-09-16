@@ -218,7 +218,7 @@ def test_auction_buy_finish():
     # Wait for endDate and finish auctions
     time.sleep(auction_time+1)
     marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
-    tx_finish = marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
+    tx_finish = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
     
     # Token balance checks
     assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
@@ -248,7 +248,7 @@ def test_initial_auction():
     putting up 3 for initial auction, bid for 2, leave 1 unbidded and finish auction.
     Retest by launching a new daily auction with stepAuction fn.
     '''
-    auction_time = 5
+    auction_time = 3
     seller_init_balance = accounts[0].balance()
     buyer_init_balance_1 = accounts[1].balance()
     buyer_init_balance_2 = accounts[2].balance()
@@ -277,7 +277,7 @@ def test_initial_auction():
 
     for idx, price in enumerate(initial_auction_prices):        
         print('Auction cycle #%s' %(idx))
-        step_auction = marketplace.stepAuctions(emograms, price)
+        step_auction = marketplace.stepAuctions(emograms, price, auction_time)
         for i in range(3*idx,3*idx+3):
             print('Emogram id #%s' %(i))
             # Do checks
