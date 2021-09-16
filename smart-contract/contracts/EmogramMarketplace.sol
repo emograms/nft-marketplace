@@ -1,14 +1,15 @@
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelinUpgrades/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelinUpgrades/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
- contract EmogramMarketplace is AccessControl, ReentrancyGuard, ERC165Storage {
+ contract EmogramMarketplace is AccessControlUpgradeable, ReentrancyGuard, UUPSUpgradeable, Initializable, ERC165Storage {
 
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
@@ -16,6 +17,12 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     bytes4 constant ERC2981ID = 0x2a55205a;
 
     bool isTestPeriod;
+
+    struct initAuction {
+        bool isInitialAuction;
+        uint256 cycle;
+    }
+
     bool public isInitialAuction = true;
 
     // Struct for a fixed price sell
@@ -55,18 +62,21 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         bool onAuction;
     }
 
+    initAuction initialAuction;
+
     // All emograms in the marketplace
     sellItem[] public emogramsOnSale;
     auctionItem[] public emogramsOnAuction;
 
     //The order of the emograms during the initial auction period
-    uint256[99] private initialEmogramsorder;
+    mapping(uint256 => uint256) private initialEmogramsorder;
 
     // Emograms in the marketplace currently up for sale or auction
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
     mapping(address => mapping(uint256 => bool)) public activeAuctions;
 
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
+    event SellCancelled(address indexed sender, address indexed tokenAddress, uint256 indexed tokenId);
     event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice);
     event BidPlaced(uint256 indexed id, uint256 indexed tokenId, address indexed bidder, uint256 bid);
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
@@ -96,7 +106,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     }
 
     modifier isInitialAuctionPeriod() {
-        require(isInitialAuction == true, "The initial auction period has already ended");
+        require(initialAuction.isInitialAuction == true, "The initial auction period has already ended");
         _;
     }
 
@@ -127,20 +137,29 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
-    constructor(bool _isTest) payable {
+    constructor() initializer {}
+
+    function initialize(bool _isTest) initializer public {
+        __AccessControl_init();
+        __UUPSUpgradeable_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
 
         _registerInterface(ERC2981ID);
         isTestPeriod = _isTest;
+
+        initialAuction.isInitialAuction = true;
+        initialAuction.cycle = 0;
     }
 
-    function setInitialorder(uint256[99] memory ids) 
+    function setInitialorder(uint256[99] memory _ids) 
      public
      onlyRole(FOUNDER_ROLE) {
-
-         initialEmogramsorder = ids;
+         require(_ids.length == 99, "id length mismatch");
+         for(uint256 i = 0; i < _ids.length; i++) {
+             initialEmogramsorder[i] = _ids[i];
+         }
     }
 
 
@@ -206,6 +225,16 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         assert(emogramsOnSale[newItemId].sellId == newItemId);
         emit EmogramAdded(newItemId, tokenId, tokenAddress, askingPrice);
         return newItemId;
+    }
+
+    function cancelSell(uint256 _id) 
+    itemExists(_id)
+    isForSale(_id)
+    isTheOwner(emogramsOnSale[_id].tokenAddress, emogramsOnSale[_id].tokenId, msg.sender)
+    public {
+        
+        emit SellCancelled(msg.sender, emogramsOnSale[_id].tokenAddress, emogramsOnSale[_id].tokenId);
+        delete emogramsOnSale[_id];
     } 
 
     // Buy the Emogram
@@ -324,7 +353,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     payable
     external
      {
-        require(initialEmogramsorder.length > 0);
+        require(initialAuction.cycle <= 33, "Max cycles already reached");
 
         if(emogramsOnAuction.length == 3) {
             for(uint i = 0; i < 3; i++) {
@@ -337,10 +366,15 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
             }
         }
 
-        for(uint256 i = initialEmogramsorder.length - 1; i > initialEmogramsorder.length - 3; i--) {
+        for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
 
             createAuction(initialEmogramsorder[i], _tokenAddress, 3, _startPrice);
-            delete initialEmogramsorder[i];
+        }
+
+        initialAuction.cycle = initialAuction.cycle + 1;
+
+        if(initialAuction.cycle >= 33) {
+            initialAuction.isInitialAuction = false;
         }
 
      }
