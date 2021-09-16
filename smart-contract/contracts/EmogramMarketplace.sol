@@ -408,9 +408,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
             
         activeAuctions[_tokenAddress][_tokenId] = false;
-        delete emogramsOnAuction[_auctionId];
-
         emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);
+        delete emogramsOnAuction[_auctionId];
      }
 
     function endAuctionWithNoBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
@@ -419,9 +418,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         require(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
 
         activeAuctions[_tokenAddress][_tokenId] = false;
-        delete emogramsOnAuction[_auctionId];
-
-        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);         
+        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);     
+        delete emogramsOnAuction[_auctionId];    
      }
 
     function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)

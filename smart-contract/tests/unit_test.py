@@ -237,7 +237,7 @@ def test_auction_buy_finish():
     assert tx_finish.events['AuctionFinished']['tokenId'] == 3
     assert tx_finish.events['AuctionFinished']['highestBidder'] == accounts[0]
     assert tx_finish.events['AuctionFinished']['seller'] == accounts[0]
-    assert tx_finish.events['AuctionFinished']['highestBid'] == emograms
+    assert tx_finish.events['AuctionFinished']['highestBid'] == 1000000000000000000
 
 
     #event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
