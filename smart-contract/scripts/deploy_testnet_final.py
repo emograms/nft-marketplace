@@ -60,6 +60,18 @@ def deploy_network(withProxy=True):
     emograms.setApprovalForAll(marketplace, True, {'from': ADR})
     emograms.setApprovalForAll(marketplace, True, {'from': DEPLOYER})
 
+def distribute_few_tokens():
+    print('Distributing tokens to MIKI, CSONGOR, PATR, ADR...')
+    emograms.safeTransferFrom(DEPLOYER, MIKI, 2, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, MIKI, 3, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, CSONGOR, 4, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, CSONGOR, 5, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, PATR, 6, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, PATR, 7, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, ADR, 8, 1, '')
+    emograms.safeTransferFrom(DEPLOYER, ADR, 9, 1, '')
+
+
 def run_initialAuction():
 
     # Setting initial prices 0.01 -> 0.1
@@ -78,4 +90,3 @@ def run_initialAuction():
     for idx, price in enumerate(initial_auction_prices):        
         print('Auction cycle #%s' %(idx))
         marketplace.stepAuctions(emograms, price, INITIAL_AUCTION_DURATION)
-
