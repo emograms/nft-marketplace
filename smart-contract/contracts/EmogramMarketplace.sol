@@ -120,6 +120,11 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
+    modifier auctionNotActive(address _tokenAddress, uint256 _tokenId) {
+        require(activeAuctions[_tokenAddress][_tokenId] == false, "Auction already finished");
+        _;
+    }
+
     // Check if the item exists
     modifier itemExists(uint256 id){
         require(id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id, "Could not find item");
@@ -419,6 +424,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
     function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)
      auctionEnded(_auctionId)
+     auctionNotActive(_tokenAddress, _tokenId)
      nonReentrant()
      hasTransferApproval(_tokenAddress, _tokenId)
      itemExistsAuction(_auctionId) 
