@@ -232,6 +232,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     external 
     returns(uint256) {
         require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
+        require(activeAuctions[tokenAddress][tokenId] == false, "Item already up for auction");
         uint256 newItemId = emogramsOnSale.length;
         emogramsOnSale.push(sellItem(newItemId, tokenAddress, tokenId, payable(msg.sender), askingPrice, false));
         activeEmograms[tokenAddress][tokenId] = true;
@@ -272,7 +273,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
         require(sentSucces, "Failed to buy");
 
-        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, msg.sender);
+        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, emogramsOnSale[id].seller);
     }
 
     function createAuction(uint256 _tokenId, address _tokenAddress, uint256 _duration, uint256 _startPrice) 
@@ -283,6 +284,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
+        require(activeEmograms[_tokenAddress][_tokenId] == false, "Item is already up for sale");
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
@@ -361,7 +363,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         }
     }
 
-    function stepAuctions(address _tokenAddress, uint256 _startPrice)
+    function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
     isInitialAuctionPeriod()
     onlyRole(FOUNDER_ROLE)
     payable
@@ -382,7 +384,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
         for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
 
-            createAuction(initialEmogramsorder[i], _tokenAddress, 3, _startPrice);
+            createAuction(initialEmogramsorder[i], _tokenAddress, _duration, _startPrice);
         }
 
         initialAuction.cycle = initialAuction.cycle + 1;
