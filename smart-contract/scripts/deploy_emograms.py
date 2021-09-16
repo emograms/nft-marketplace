@@ -84,5 +84,8 @@ def main():
 
     print("FounderVault Balance: ", foundervault.balance())
 
+    emograms.setURI("https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json", {'from': accounts[0]})
+    print(emograms.uri(3, {'from': accounts[0]}))
+
 
 
