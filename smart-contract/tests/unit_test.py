@@ -206,8 +206,10 @@ def test_auction_buy_finish():
     # Place 2 bids from different accounts
     marketplace.PlaceBid(0, 2, emograms, {'from': accounts[2], 'value': bid_price_1})
     marketplace.PlaceBid(0, 2, emograms, {'from': accounts[3], 'value': bid_price_2})
-    auction = marketplace.emogramsOnAuction(0)
-    print('auctionItem[0]: ', auction)
+    auction_0 = marketplace.emogramsOnAuction(0)
+    auction_1 = marketplace.emogramsOnAuction(0)
+    print('auctionItem[0]: ', auction_0)
+    print('auctionItem[1]: ', auction_1)
     
     # Check if the auction can be finished before endDate
     try: 
@@ -217,14 +219,19 @@ def test_auction_buy_finish():
     
     # Wait for endDate and finish auctions
     time.sleep(auction_time+1)
-    marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
-    tx_finish = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
+    tx_finish_bid = marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
+    tx_finish_nobid = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
     
     # Token balance checks
     assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[2], 2, {'from': accounts[0]}) == 0
     assert emograms.balanceOf(accounts[3], 2, {'from': accounts[0]}) == 1
+
+    assert emograms.balanceOf(accounts[0], 3, {'from': accounts[0]}) == 1
+    assert emograms.balanceOf(accounts[1], 3, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[2], 3, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[3], 3, {'from': accounts[0]}) == 0
 
     # ETH balance checks
     assert accounts[0].balance() == seller_init_balance_1 + bid_price_2*royalty_pct
@@ -233,12 +240,17 @@ def test_auction_buy_finish():
     assert accounts[3].balance() == buyer_init_balance_2 - bid_price_2
 
     # Event checks
-    assert tx_finish.events['AuctionFinished']['id'] == tx_finish.return_value
-    assert tx_finish.events['AuctionFinished']['tokenId'] == 3
-    assert tx_finish.events['AuctionFinished']['highestBidder'] == accounts[0]
-    assert tx_finish.events['AuctionFinished']['seller'] == accounts[0]
-    assert tx_finish.events['AuctionFinished']['highestBid'] == 1000000000000000000
+    assert tx_finish_bid.events['AuctionFinished']['id'] == 0
+    assert tx_finish_bid.events['AuctionFinished']['tokenId'] == 2
+    assert tx_finish_bid.events['AuctionFinished']['highestBidder'] == accounts[3]
+    assert tx_finish_bid.events['AuctionFinished']['seller'] == accounts[1]
+    assert tx_finish_bid.events['AuctionFinished']['highestBid'] == bid_price_2
 
+    assert tx_finish_nobid.events['AuctionFinished']['id'] == 1
+    assert tx_finish_nobid.events['AuctionFinished']['tokenId'] == 3
+    assert tx_finish_nobid.events['AuctionFinished']['highestBidder'] == accounts[0]
+    assert tx_finish_nobid.events['AuctionFinished']['seller'] == accounts[0]
+    assert tx_finish_nobid.events['AuctionFinished']['highestBid'] == sell_price
 
     #event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
 
@@ -319,7 +331,7 @@ def test_proxy():
 '''
 Todo:
 - cancel fix price buy
+- check emogramsOnAuction
+- check emogramsOnSale
 - proxy implementation and upgradability checks
-- initialAuctionFinished event
-- event checks in all function
 '''
