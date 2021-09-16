@@ -291,9 +291,9 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         activeAuctions[_tokenAddress][_tokenId] = true;
 
         assert(emogramsOnAuction[emogramsOnAuction.length - 1].auctionId == emogramsOnAuction.length - 1);
-        emit AuctionCreated(emogramsOnAuction.length, _tokenId, msg.sender, _tokenAddress, _startPrice, durationToDays);
+        emit AuctionCreated(emogramsOnAuction[emogramsOnAuction.length - 1].auctionId, _tokenId, msg.sender, _tokenAddress, _startPrice, durationToDays);
 
-        return emogramsOnAuction.length;
+        return emogramsOnAuction[emogramsOnAuction.length - 1].auctionId;
     }
 
     function cancelAuction(uint256 _auctionId, uint256 _tokenId, address _tokenAddress)
