@@ -120,8 +120,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
-    modifier auctionNotActive(address _tokenAddress, uint256 _tokenId) {
-        require(activeAuctions[_tokenAddress][_tokenId] == false, "Auction already finished");
+    modifier auctionNotActive(uint256 _auctionId) {
+        require(activeAuctions[emogramsOnAuction[_auctionId].tokenAddress][emogramsOnAuction[_auctionId].tokenId] == false, "Auction already finished");
         _;
     }
 
@@ -424,7 +424,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
     function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)
      auctionEnded(_auctionId)
-     auctionNotActive(_tokenAddress, _tokenId)
+     auctionNotActive(_auctionId)
      nonReentrant()
      hasTransferApproval(_tokenAddress, _tokenId)
      itemExistsAuction(_auctionId) 
