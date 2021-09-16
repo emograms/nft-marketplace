@@ -217,7 +217,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     isForSale(id) 
     {
         require(msg.value >= emogramsOnSale[id].price, "Not enough funds for purchase");
-        require(msg.sender != emogramsOnSale[id].seller);
+        require(msg.sender != emogramsOnSale[id].seller, "Cannot buy own emogram");
 
         emogramsOnSale[id].isSold = true;
         activeEmograms[emogramsOnSale[id].tokenAddress][emogramsOnSale[id].tokenId] = false;
