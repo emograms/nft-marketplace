@@ -273,7 +273,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
         require(sentSucces, "Failed to buy");
 
-        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, msg.sender);
+        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, emogramsOnSale[id].seller);
     }
 
     function createAuction(uint256 _tokenId, address _tokenAddress, uint256 _duration, uint256 _startPrice) 
@@ -284,7 +284,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
-        require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
+        require(activeEmograms[_tokenAddress][_tokenId] == false, "Item is already up for sale");
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
