@@ -77,7 +77,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
     event SellCancelled(address indexed sender, address indexed tokenAddress, uint256 indexed tokenId);
-    event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice);
+    event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice, address seller);
     event BidPlaced(uint256 indexed id, uint256 indexed tokenId, address indexed bidder, uint256 bid);
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
     event AuctionCanceled(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress);
@@ -267,7 +267,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
         require(sentSucces, "Failed to buy");
 
-        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price);
+        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, msg.sender);
     }
 
     function createAuction(uint256 _tokenId, address _tokenAddress, uint256 _duration, uint256 _startPrice) 
