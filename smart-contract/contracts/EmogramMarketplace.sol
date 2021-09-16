@@ -101,29 +101,29 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     }
 
     modifier auctionNotEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction has already ended.");
+        require(emogramsOnAuction[_auctionId].endDate > block.timestamp, "Auction has already ended");
         _;
     }
 
         modifier auctionEnded(uint256 _auctionId) {
-        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction is still ongoing.");
+        require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction is still ongoing");
         _;
     }
 
     // Check if the item exists
     modifier itemExists(uint256 id){
-        require(id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id, "could not find item");
+        require(id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id, "Could not find item");
         _;
     }
     
     modifier itemExistsAuction(uint256 id) {
-        require(id <= emogramsOnAuction.length && emogramsOnAuction[id].auctionId == id, "could not find item");
+        require(id <= emogramsOnAuction.length && emogramsOnAuction[id].auctionId == id, "Could not find item");
         _;
     }
 
     // Check if the item is actually up for sale
     modifier isForSale(uint256 id) {
-        require(emogramsOnSale[id].isSold == false, "item is already sold");
+        require(emogramsOnSale[id].isSold == false, "Item is already sold");
         _;
     }
 
@@ -198,7 +198,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     nonReentrant() 
     external 
     returns(uint256) {
-        require(activeEmograms[tokenAddress][tokenId] == false, "item is already up for sale");
+        require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
         uint256 newItemId = emogramsOnSale.length;
         emogramsOnSale.push(sellItem(newItemId, tokenAddress, tokenId, payable(msg.sender), askingPrice, false));
         activeEmograms[tokenAddress][tokenId] = true;
@@ -217,7 +217,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     isForSale(id) 
     {
         require(msg.value >= emogramsOnSale[id].price, "Not enough funds for purchase");
-        require(msg.sender != emogramsOnSale[id].seller);
+        require(msg.sender != emogramsOnSale[id].seller, "Cannot buy own item");
 
         emogramsOnSale[id].isSold = true;
         activeEmograms[emogramsOnSale[id].tokenAddress][emogramsOnSale[id].tokenId] = false;
@@ -296,7 +296,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "Auction has already finished");
         require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
-        require(emogramsOnAuction[_auctionId].seller != msg.sender, "You can't bid on your own auction!");
+        require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
         if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {    
         (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
@@ -347,7 +347,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
     function endAuctionWithBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
 
-        require(emogramsOnAuction[_auctionId].highestBid != 0);
+        require(emogramsOnAuction[_auctionId].highestBid != 0, "Highest bid cannot be zero in endAuctionWithBid()");
 
         (address receiver, uint256 toSend) = sendRoyaltyAuction(_auctionId);
 
