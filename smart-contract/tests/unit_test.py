@@ -1,7 +1,7 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplace, accounts
+from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, accounts
 
 
 def test_deploy():
@@ -68,49 +68,65 @@ def test_minting():
     for i in range(1, 12):
         assert emograms.balanceOf(accounts[0], i, {'from': accounts[0]}) == 1
 
+def test_fixed_buy_cancel():
+    '''
+    Testing the fixed price selling mechanism cancel function
+    '''
 
 def test_fixed_buy():
     '''
     Minting an NFT, approving marketplace, selling on fixed price and buying
     Reselling the bought NFT and checking royalty amounts
     '''
+    
     seller_init_balance = accounts[0].balance()
+    seller_init_balance_1 = accounts[1].balance()
     sell_price = 1e18
+    royalty_pct = 0.075
+    buyer_init_balance = accounts[2].balance()
+    token_id_2 = 2
+    token_id_3 = 3
+    
+    # Try buying own emogram
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-    marketplace.addEmogramToMarket(
-        2, emograms, sell_price, {'from': accounts[0]})
-    marketplace.buyEmogram(
-        0, {'from': accounts[1], 'amount': sell_price})
-
-    assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 1
-    assert accounts[0].balance() == seller_init_balance + sell_price
-
-    # Royalty checks
-    royalty_pct = 0.075
-    seller_init_balance_1 = accounts[0].balance()
-    seller_init_balance_2 = accounts[1].balance()
-    buyer_init_balance_1 = accounts[2].balance()
-    sell_price = 1e18
-
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
-    marketplace.addEmogramToMarket(
-        2, emograms, sell_price, {'from': accounts[1]})
-    marketplace.buyEmogram(
-        1, {'from': accounts[2], 'amount': sell_price})
+    tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
+    try: 
+        marketplace.buyEmogram(0, {'from': accounts[0], 'amount': sell_price})
+    except Exception as e:
+        assert 'Cannot buy own item' in e.revert_msg
+
+    assert tx_sell.events['EmogramAdded']['id'] == tx_sell.return_value
+    assert tx_sell.events['EmogramAdded']['tokenId'] == token_id_2
+    assert tx_sell.events['EmogramAdded']['tokenAddress'] == emograms
+    assert tx_sell.events['EmogramAdded']['askingPrice'] == sell_price
+    assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 1
+    assert accounts[0].balance() == seller_init_balance
+
+    # Buying others emogram and Royalty checks
+    emograms.createEmogram({'from': accounts[0]})
+    emograms.safeTransferFrom(accounts[0], accounts[1], 3, 1, '')
+    marketplace.addEmogramToMarket(token_id_3, emograms, sell_price, {'from': accounts[1]})
+    tx_buy = marketplace.buyEmogram(tx_sell.return_value+1, {'from': accounts[2], 'amount': sell_price})
+
+    # Event checks
+    assert tx_buy.events['EmogramSold']['id'] == tx_sell.return_value+1
+    assert tx_buy.events['EmogramSold']['tokenId'] == token_id_3
+    assert tx_buy.events['EmogramSold']['buyer'] == accounts[2]
+    assert tx_buy.events['EmogramSold']['askingPrice'] == sell_price
 
     # Token balance checks
-    assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
-    assert emograms.balanceOf(accounts[1], 2, {'from': accounts[0]}) == 0
-    assert emograms.balanceOf(accounts[2], 2, {'from': accounts[0]}) == 1
+    assert emograms.balanceOf(accounts[0], 3, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[1], 3, {'from': accounts[0]}) == 0
+    assert emograms.balanceOf(accounts[2], 3, {'from': accounts[0]}) == 1
 
     # ETH balance checks
-    assert accounts[0].balance() == seller_init_balance_1 + sell_price*royalty_pct
-    assert accounts[1].balance() == seller_init_balance_2 + sell_price - sell_price*royalty_pct
-    assert accounts[2].balance() == buyer_init_balance_1 - sell_price
+    assert accounts[1].balance() == seller_init_balance_1 + sell_price - (sell_price*royalty_pct)
+    assert accounts[2].balance() == buyer_init_balance - sell_price
 
 
 
@@ -118,15 +134,37 @@ def test_auction_cancel():
     '''
     Minting an NFT, approving marketplace, selling on auction and canceling it
     '''
-
+    token_id = 2
+    duration = 5
+    start_price = 1e18
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-    marketplace.createAuction(2, emograms, 10, 1e18, {'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+    timestamp = round(time.time())
+    tx_create = marketplace.createAuction(token_id, emograms, duration, start_price, {'from': accounts[0]})
     assert marketplace.emogramsOnAuction(0)['onAuction'] == True
-    marketplace.cancelAuction(0, 2, emograms, {'from': accounts[0]})
+    assert tx_create.events['AuctionCreated']['id'] == tx_create.return_value
+    assert tx_create.events['AuctionCreated']['tokenId'] == token_id
+    assert tx_create.events['AuctionCreated']['seller'] == accounts[0]
+    assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
+    assert tx_create.events['AuctionCreated']['startPrice'] == start_price
+    assert tx_create.events['AuctionCreated']['duration'] == timestamp+duration
+    # Testing a cancel from another account
+    try: 
+        marketplace.cancelAuction(0, 2, emograms, {'from': accounts[1]})
+    except Exception as e:
+        assert 'Not owner' in e.revert_msg
+        assert marketplace.emogramsOnAuction(0)['onAuction'] == True
+    
+    # Testing cancel from own account
+    tx_cancel = marketplace.cancelAuction(0, 2, emograms, {'from': accounts[0]})
     assert marketplace.emogramsOnAuction(0)['onAuction'] == False
+    assert tx_cancel.events['AuctionCanceled']['id'] == tx_create.return_value
+    assert tx_cancel.events['AuctionCanceled']['tokenId'] == token_id
+    assert tx_cancel.events['AuctionCanceled']['seller'] == accounts[0]
+    assert tx_cancel.events['AuctionCanceled']['tokenAddress'] == emograms
 
 
 def test_auction_buy_finish():
@@ -166,10 +204,8 @@ def test_auction_buy_finish():
     marketplace.createAuction(3, emograms, auction_time, sell_price, {'from': accounts[0]})
 
     # Place 2 bids from different accounts
-    marketplace.PlaceBid(
-        0, 2, emograms, {'from': accounts[2], 'value': bid_price_1})
-    marketplace.PlaceBid(
-        0, 2, emograms, {'from': accounts[3], 'value': bid_price_2})
+    marketplace.PlaceBid(0, 2, emograms, {'from': accounts[2], 'value': bid_price_1})
+    marketplace.PlaceBid(0, 2, emograms, {'from': accounts[3], 'value': bid_price_2})
     auction = marketplace.emogramsOnAuction(0)
     print('auctionItem[0]: ', auction)
     
@@ -177,12 +213,12 @@ def test_auction_buy_finish():
     try: 
         marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
     except Exception as e:
-        assert 'Auction is still ongoing.' == e.revert_msg
+        assert 'Auction is still ongoing' in e.revert_msg
     
     # Wait for endDate and finish auctions
     time.sleep(auction_time+1)
-    tx = marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
-    marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
+    marketplace.finishAuction(emograms, 2, 0, {'from': accounts[1]})
+    tx_finish = marketplace.finishAuction(emograms, 3, 0, {'from': accounts[0]})
     
     # Token balance checks
     assert emograms.balanceOf(accounts[0], 2, {'from': accounts[0]}) == 0
@@ -196,6 +232,16 @@ def test_auction_buy_finish():
     assert accounts[2].balance() == buyer_init_balance_1
     assert accounts[3].balance() == buyer_init_balance_2 - bid_price_2
 
+    # Event checks
+    assert tx_finish.events['AuctionFinished']['id'] == tx_finish.return_value
+    assert tx_finish.events['AuctionFinished']['tokenId'] == 3
+    assert tx_finish.events['AuctionFinished']['highestBidder'] == accounts[0]
+    assert tx_finish.events['AuctionFinished']['seller'] == accounts[0]
+    assert tx_finish.events['AuctionFinished']['highestBid'] == emograms
+
+
+    #event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
+
 def test_initial_auction():
     '''
     Testing initial auction by minting all emograms with batchMint, 
@@ -207,7 +253,8 @@ def test_initial_auction():
     buyer_init_balance_1 = accounts[1].balance()
     buyer_init_balance_2 = accounts[2].balance()
     buyer_init_balance_3 = accounts[3].balance()
-    bid_price = 1.1e18
+    bid_price_1 = 1.1e18
+    bid_price_2 = 1.2e18
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
@@ -221,29 +268,58 @@ def test_initial_auction():
     random.shuffle(initial_order)
     assert len(initial_order) == 99
     marketplace.setInitialorder(initial_order)
-    for idx, id in enumerate(initial_order):
-        assert marketplace.initialEmogramsorder(idx) == id
-    
+
     emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[2]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[3]})
 
-    for idx, day in enumerate(initial_auction_prices[:5]):
-        price = initial_auction_prices[idx]
-        marketplace.stepAuctions(emograms, price)
-        for i in range(idx, idx+3):
+    for idx, price in enumerate(initial_auction_prices):        
+        print('Auction cycle #%s' %(idx))
+        step_auction = marketplace.stepAuctions(emograms, price)
+        for i in range(3*idx,3*idx+3):
+            print('Emogram id #%s' %(i))
+            # Do checks
             tx = marketplace.emogramsOnAuction(i)
             assert tx['onAuction'] == True
-            assert tx['tokenId'] == initial_order[idx+i]
-            assert tx['startPrice'] == day
+            assert tx['tokenId'] == initial_order[i]
+            assert tx['startPrice'] == price
         
+        # Bid for only every 3
+        if i%3==0:
+            marketplace.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[2], 'value': bid_price_1})
+            marketplace.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[3], 'value': bid_price_2})
+
+        # Check if every third is owned by accounts[3] and the rest is owned by accounts[0]
+        if idx > 0:
+            if i%3==0:
+                assert emograms.balanceOf(accounts[0], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 1
+            else:
+                assert emograms.balanceOf(accounts[0], initial_order[idx], {'from': accounts[0]}) == 1
+                assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 0
+
+    # Check if initialAuction period ended
+    assert 'InitialAuctionFinished' in step_auction.events
+
+def test_proxy():
+    '''
+    Deploying contracts with proxy scheme and testing upgradability
+    '''
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    proxy = EmogramsMarketplaceProxy.deploy(accounts[0], marketplace, {'from': accounts[0]})
+    #assert '' in tx.events
+    #proxy.upgradeTo(marketplace.address)
+    #assert proxy. == marketplace.address
 
 '''
 Todo:
+- cancel fix price buy
 - proxy implementation and upgradability checks
-- mint all emograms, put up 3 for initial auction, bid for 2 and leave 1 unbidded, call stepAuction to close and repeate 
 - initialAuctionFinished event
 - event checks in all function
 '''
