@@ -18,24 +18,28 @@ def deploy_network(withProxy=True, testMode=False):
     print(network.show_active() + "\n")
 
     # Init deployer address
-    MIKI = accounts.add(PRIVATE_KEY_GOERLI_MIKI)
-    CSONGOR = accounts.add(PRIVATE_KEY_GOERLI_CSONGOR)
-    PATR = accounts.add(PRIVATE_KEY_GOERLI_PATR)
-    ADR = accounts.add(PRIVATE_KEY_GOERLI_ADR)
-    DEPLOYER = accounts.add(PRIVATE_KEY_GOERLI_DEPLOYER)
+    accounts.add(PRIVATE_KEY_GOERLI_MIKI)
+    accounts.add(PRIVATE_KEY_GOERLI_CSONGOR)
+    accounts.add(PRIVATE_KEY_GOERLI_PATR)
+    accounts.add(PRIVATE_KEY_GOERLI_ADR)
+    accounts.add(PRIVATE_KEY_GOERLI_DEPLOYER)
+
+    MIKI = accounts[0]
+    CSONGOR = accounts[1]
+    PATR = accounts[2]
+    ADR = accounts[3]
+    DEPLOYER = accounts[4]
 
     # Deploying contracts
-    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(testMode, {'from': accounts[0]})
-    if withProxy:
-        marketplace = EmogramsMarketplaceProxy.deploy()
+    emograms = EmogramsCollectible.deploy({'from': DEPLOYER})
+    marketplace = EmogramMarketplace.deploy(True, {'from': DEPLOYER})
 
     # Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
     founders_pct = [50, 5, 22.5, 22.5]
     founders_pct = [x*10000 for x in founders_pct]
-    vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
-    
+    vault = FounderVault.deploy(founders, founders_pct, {'from': DEPLOYER})
+
     print("Contracts deployed on:", network.show_active())
 
     # Set beneficiary on EmogramsCollectible
@@ -44,20 +48,17 @@ def deploy_network(withProxy=True, testMode=False):
     # Minting Emogram NFT tokens
     mint_token_ids = list(range(2, 101))
     mint_amounts = [1 for i in range(99)]
-    emograms.mintBatch(accounts[0], mint_token_ids, mint_amounts, "")
-
-    for i in mint_token_ids:
-        print("ids minted: ", i)
+    emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "")
 
     # Checking total of Emogram tokens number
     y = 0
     for x in range(0, 101):
-        if(emograms.balanceOf(accounts[0], x, {'from': accounts[0]}) != 0):
-            y = y + emograms.balanceOf(accounts[0], x, {'from': accounts[0]})
+        if(emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER}) != 0):
+            y = y + emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER})
     print("Total emograms minted: ", y)
 
     # setURI for IPFS hashes
-    emograms.setURI(IPFS_URI, {'from': accounts[0]})
+    emograms.setURI(IPFS_URI, {'from': DEPLOYER})
 
     # Approve addreses
     emograms.setApprovalForAll(marketplace, True, {'from': MIKI})
@@ -85,6 +86,8 @@ def distribute_few_tokens():
     emograms.safeTransferFrom(DEPLOYER, PATR, 1, 2, '')
     emograms.safeTransferFrom(DEPLOYER, ADR, 1, 2, '')
 
+def distribute_ether(to, amount=2e18):
+    DEPLOYER.transfer(to, amount)
 
 def run_initialAuction():
 
