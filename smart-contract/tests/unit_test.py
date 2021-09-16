@@ -150,7 +150,7 @@ def test_auction_cancel():
     assert tx_create.events['AuctionCreated']['seller'] == accounts[0]
     assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
     assert tx_create.events['AuctionCreated']['startPrice'] == start_price
-    assert tx_create.events['AuctionCreated']['duration'] == timestamp+duration
+    assert (tx_create.events['AuctionCreated']['duration'] == timestamp+duration) or (tx_create.events['AuctionCreated']['duration'] == timestamp+duration-1) or (tx_create.events['AuctionCreated']['duration'] == timestamp+duration+1)
     # Testing a cancel from another account
     try: 
         marketplace.cancelAuction(0, 2, emograms, {'from': accounts[1]})
