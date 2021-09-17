@@ -7,7 +7,7 @@ from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accou
 TODO
 
 """
-
+IPFS_URI = 'ipfs://QmUm25XMSnUvxvi7XE9Xr8XwRdkNosmTDyKDDyxMajjytv'
 
 def main():
     dev = accounts.load(0)
@@ -85,8 +85,13 @@ def main():
 
     print("FounderVault Balance: ", foundervault.balance())
 
-    emograms.setURI("https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json", {'from': accounts[0]})
-    print(emograms.uri(3, {'from': accounts[0]}))
+    token_ids = list(range(2, 101))
+    token_uris = []
+    for x in range(0,99):
+        token_uris.append(IPFS_URI + str(token_ids[x])) #Generating uris as BASE_URL/{id}
+
+    emograms.setURI("ipfs://QmRdjXwcVcxzZvoKjHy1uK6WegwGyi4WZDmsXP9p5VCrYh/", {'from': accounts[0]})
+    print(emograms.uri(5, {'from': accounts[0]}))
 
 
 
