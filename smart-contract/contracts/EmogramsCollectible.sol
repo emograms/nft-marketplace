@@ -97,7 +97,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
          tokenURI[_id] = _uri;
      }
 
-    function tokenURI(uint256 _id) 
+    function getTokenURI(uint256 _id) 
      public
      view
      returns (string memory) {
@@ -174,7 +174,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     onlyRole(MINTER_ROLE)
     returns (bool) {
 
-        mint(msg.sender, 1, 110, "");
+        mint(msg.sender, SRT, 110, "");
         return true;
     }
 
@@ -189,17 +189,6 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         redeemAble[emogramId] = true;
         emogramId = emogramId + 1;
         return emogramId;
-    }
-
-    function createEmogramsCollection(uint256 _amount)
-    public
-    notFullEmograms()
-    onlyRole(MINTER_ROLE)
-    returns (uint256) {
-
-        for(uint j = emogramId; j <= _amount; j++) {
-            createEmogram();
-        }
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice)

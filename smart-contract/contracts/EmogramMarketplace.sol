@@ -185,6 +185,20 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
             grantRole(FOUNDER_ROLE, msg.sender);
         }
 
+    function emogramsOnSaleLength()
+        public
+        view
+        returns (uint256) {
+            return emogramsOnSale.length;
+        }
+
+    function emogramsOnAuctionLength()
+        public
+        view
+        returns (uint256) {
+            return emogramsOnAuction.length;
+        }
+
     //Sell ID
     //transfers royalty to receiver
     //returns the amount to send to the seller and the seller
