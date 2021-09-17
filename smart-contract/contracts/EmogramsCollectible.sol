@@ -37,6 +37,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
 
     //If the token indentified by id is redeemable this is true,
     //if the id was redeemed, it is false
+    uint public redeemedCounter = 0;
     mapping(uint256 => bool) public redeemAble;
     mapping(uint256 => bytes32) public originalityHash;
 
@@ -77,14 +78,15 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         _setupRole(MINTER_ROLE, msg.sender);
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
         beneficiary = payable(msg.sender);
+        setRedeemAble();
 
         _registerInterface(ERC165ID);
         _registerInterface(ERC2981ID);
     }
 
     function setURI(string memory newuri) 
-        public 
-        onlyRole(URI_SETTER_ROLE) {
+    public 
+    onlyRole(URI_SETTER_ROLE) {
         _setURI(newuri);
     }
 
@@ -97,38 +99,38 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     }
 
     function ownerOf(uint256 _tokenId, address _maybeOwner)
-        public 
-        view 
-        returns (bool) {
-            return balanceOf(_maybeOwner, _tokenId) != 0;
+    public 
+    view 
+    returns (bool) {
+        return balanceOf(_maybeOwner, _tokenId) != 0;
     }
 
     function mint(address account, uint256 id, uint256 amount, bytes memory data)
-        public
-        onlyRole(MINTER_ROLE) {
+    public
+    onlyRole(MINTER_ROLE) {
         
         ownerOfById[id] = account;
         _mint(account, id, amount, data);
     }
 
     function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-        public
-        onlyRole(MINTER_ROLE) {
+    public
+    onlyRole(MINTER_ROLE) {
         
         _mintBatch(to, ids, amounts, data);
     }
 
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) 
-     public 
-     override(ERC1155) {
+    public 
+    override(ERC1155) {
         super.safeTransferFrom(from, to, id, amount, data);
         ownerOfById[id] = to;
     }
 
     function setRedeemAble()
     onlyRole(MINTER_ROLE)
-    public {
-        for(uint i = 0; i < emogramId; i++) {
+    private {
+        for(uint i = emogramId; i < maxEmogramNum + 1; i++) {
             redeemAble[i] = true;
         }
     }
@@ -142,13 +144,13 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     }
 
     function createFunToken(uint256 _amount, uint8 _tokenId)
-     public
-     onlyRole(MINTER_ROLE) 
-     returns (uint256 amount, uint8 tokenId) {
+    public
+    onlyRole(MINTER_ROLE) 
+    returns (uint256 amount, uint8 tokenId) {
 
-         mint(msg.sender, _tokenId, _amount, "");
-         emit FungibleTokenMinted(msg.sender, _tokenId, _amount);
-         return (_amount, _tokenId);
+        mint(msg.sender, _tokenId, _amount, "");
+        emit FungibleTokenMinted(msg.sender, _tokenId, _amount);
+        return (_amount, _tokenId);
     }
 
     function createSRT()
@@ -212,26 +214,29 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         super.setApprovalForAll(_operator, _approved);
     } 
 
-    //function burn(address account, uint256 id, uint256 amount) {}
+    // TODO
+    // function burn(address account, uint256 id, uint256 amount) {}
 
     function redeemSculp(uint256 _tokenId)
     onlyOwner(_tokenId, msg.sender)
     public {
-            require(redeemAble[_tokenId] == true, "This Sculpture has already been redeemed");
-            require(balanceOf(msg.sender, SRT) >= 9, "Not enough SRT token to redeem");
+        require(redeemAble[_tokenId] == true, "This sculpture has already been redeemed");
+        require(balanceOf(msg.sender, SRT) >= 11, "Not enough SRT token to redeem");
+        require(redeemedCounter < 10, "All of the 9 sculptures are redeemed");
 
-            redeemAble[_tokenId] = false;
-            emit SculptureRedeemed(_tokenId, msg.sender);
+        redeemAble[_tokenId] = false;
+        redeemedCounter += 1;
+        emit SculptureRedeemed(_tokenId, msg.sender);
     }
 
     function verifyOrig(string memory _origString, uint256 _tokenId)
-     public 
-     returns (bool) {
-         if(keccak256(abi.encodePacked(_origString)) == originalityHash[_tokenId]) {
-             return true;
+    public 
+    returns (bool) {
+        if(keccak256(abi.encodePacked(_origString)) == originalityHash[_tokenId]) {
+            return true;
          }
-         else {
-             return false;
+        else {
+            return false;
          }
      }
 
