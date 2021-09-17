@@ -5,7 +5,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 
 # VARS
 INITIAL_AUCTION_DURATION = 90
-IPFS_URI = 'https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/'
+IPFS_URI = 'https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json'
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 
 # WALLETS
@@ -69,13 +69,7 @@ def deploy_network(withProxy=True, testMode=False, publishSource=True):
             y = y + emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER})
     print("Total emograms minted: ", y)
 
-    # setURI for IPFS hashes
-    token_ids = list(range(2, 101))
-    token_uris = []
-    for x in range(0,99):
-        token_uris.append(IPFS_URI + str(token_ids[x])) #Generating uris as BASE_URL/{id}
-
-    emograms.setTokenURI(token_ids, token_uris, {'from': DEPLOYER, 'gas_price': gas_strategy})
+    emograms.setURI(IPFS_URI, {'from': DEPLOYER, 'gas_price': gas_strategy})
 
     # Approve addreses
     emograms.setApprovalForAll(marketplace, True, {'from': MIKI, 'gas_price': gas_strategy})
