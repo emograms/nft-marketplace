@@ -7,6 +7,7 @@ compiler:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.0'
       - '@openzeppelinUpgrades=OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.0'
 autofetch_sources: True
+dev_deployment_artifacts: True
 # networks:
 #     development:
 #         cmd_settings:
