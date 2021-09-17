@@ -40,7 +40,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     uint public redeemedCounter = 0;
     mapping(uint256 => bool) public redeemAble;
     mapping(uint256 => bytes32) public originalityHash;
-    //mapping(uint256 => string) public tokenURI;
+    mapping(uint256 => string) public tokenURI;
 
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
@@ -90,24 +90,20 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     onlyRole(URI_SETTER_ROLE) {
         _setURI(newuri);
     }
-/* 
-    function setTokenURI(string[] memory _uris) 
+
+    function setTokenURI(uint256 _id, string memory _uri) 
      onlyRole(MINTER_ROLE)
      public {
-
-         for(uint i = 2; i < 101; i++) {
-             tokenURI[i] = _uris[i]; 
-         }
+         tokenURI[_id] = _uri;
      }
 
-    function uri(uint256 _id) 
+    function tokenURI(uint256 _id) 
      public
      view
-     override(ERC1155)
      returns (string memory) {
          return tokenURI[_id];
      }
- */
+
     function setOrigHash(bytes32[] memory _hashes)
     onlyRole(MINTER_ROLE)
     public {
@@ -244,6 +240,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
 
         redeemAble[_tokenId] = false;
         redeemedCounter += 1;
+        burn(msg.sender, SRT, 9);
         emit SculptureRedeemed(_tokenId, msg.sender);
     }
 
