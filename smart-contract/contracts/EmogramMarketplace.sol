@@ -369,6 +369,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         }
 
         else {
+            require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
 
