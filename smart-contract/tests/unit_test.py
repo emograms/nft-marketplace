@@ -1,7 +1,7 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, accounts
+from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, FounderVault, accounts
 
 
 def test_deploy():
@@ -72,58 +72,58 @@ def test_fixed_buy_cancel():
     '''
     Testing the fixed price selling mechanism cancel function
     '''
-seller_init_balance = accounts[0].balance()
-sell_price = 1e18
-token_id_2 = 2
-# Try canceling fix price 
-emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
-emograms.createEmogram({'from': accounts[0]})
-emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
-sell_id = tx_sell.return_value
-sell_item = marketplace.emogramsOnSale(sell_id)
+    seller_init_balance = accounts[0].balance()
+    sell_price = 1e18
+    token_id_2 = 2
+    # Try canceling fix price 
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    emograms.createEmogram({'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+    tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
+    sell_id = tx_sell.return_value
+    sell_item = marketplace.emogramsOnSale(sell_id)
 
-# Assert emitted EmogramAdded event
-assert tx_sell.events['EmogramAdded']['id'] == sell_id
-assert tx_sell.events['EmogramAdded']['tokenId'] == token_id_2
-assert tx_sell.events['EmogramAdded']['tokenAddress'] == emograms.address
-assert tx_sell.events['EmogramAdded']['askingPrice'] == sell_price
+    # Assert emitted EmogramAdded event
+    assert tx_sell.events['EmogramAdded']['id'] == sell_id
+    assert tx_sell.events['EmogramAdded']['tokenId'] == token_id_2
+    assert tx_sell.events['EmogramAdded']['tokenAddress'] == emograms.address
+    assert tx_sell.events['EmogramAdded']['askingPrice'] == sell_price
 
-# Assert emogramsOnSale array[0]
-assert sell_item['sellId'] == sell_id
-assert sell_item['tokenAddress'] == emograms.address
-assert sell_item['tokenId'] == token_id_2
-assert sell_item['seller'] == accounts[0]
-assert sell_item['price'] == sell_price
-assert sell_item['isSold'] == False
+    # Assert emogramsOnSale array[0]
+    assert sell_item['sellId'] == sell_id
+    assert sell_item['tokenAddress'] == emograms.address
+    assert sell_item['tokenId'] == token_id_2
+    assert sell_item['seller'] == accounts[0]
+    assert sell_item['price'] == sell_price
+    assert sell_item['isSold'] == False
 
-# Assert activeEmograms
-assert marketplace.activeEmograms(emograms, 2) == True
+    # Assert activeEmograms
+    assert marketplace.activeEmograms(emograms, 2) == True
 
-# Cancel sell
-tx_cancel = marketplace.cancelSell(sell_id)
-canceled_sell_item = marketplace.emogramsOnSale(sell_id)
+    # Cancel sell
+    tx_cancel = marketplace.cancelSell(sell_id)
+    canceled_sell_item = marketplace.emogramsOnSale(sell_id)
 
-# Assert cancel events
-assert tx_cancel.events['SellCancelled']['sender'] == accounts[0]
-assert tx_cancel.events['SellCancelled']['tokenId'] == token_id_2
-assert tx_cancel.events['SellCancelled']['tokenAddress'] == emograms.address
+    # Assert cancel events
+    assert tx_cancel.events['SellCancelled']['sender'] == accounts[0]
+    assert tx_cancel.events['SellCancelled']['tokenId'] == token_id_2
+    assert tx_cancel.events['SellCancelled']['tokenAddress'] == emograms.address
 
-# Assert emogramsOnSale array[0]
-assert canceled_sell_item['sellId'] == sell_id
-assert canceled_sell_item['tokenAddress'] == '0x0000000000000000000000000000000000000000'
-assert canceled_sell_item['tokenId'] == 0
-assert canceled_sell_item['seller'] == '0x0000000000000000000000000000000000000000'
-assert canceled_sell_item['price'] == 0
-assert canceled_sell_item['isSold'] == False
+    # Assert emogramsOnSale array[0]
+    assert canceled_sell_item['sellId'] == sell_id
+    assert canceled_sell_item['tokenAddress'] == '0x0000000000000000000000000000000000000000'
+    assert canceled_sell_item['tokenId'] == 0
+    assert canceled_sell_item['seller'] == '0x0000000000000000000000000000000000000000'
+    assert canceled_sell_item['price'] == 0
+    assert canceled_sell_item['isSold'] == False
 
-# Assert activeEmograms
-assert marketplace.activeEmograms(emograms, 2) == False
+    # Assert activeEmograms
+    assert marketplace.activeEmograms(emograms, 2) == False
 
-# Assert increased emogramsOnSale id
-tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
-assert sell_id+1 == tx_sell.return_value
+    # Assert increased emogramsOnSale id
+    tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
+    assert sell_id+1 == tx_sell.return_value
 
 def test_fixed_buy():
     '''
@@ -367,6 +367,73 @@ def test_initial_auction():
     # Check if initialAuction period ended
     assert 'InitialAuctionFinished' in step_auction.events
 
+def test_founder_vault_royalties():
+    '''
+    Deploying founder vault and setting as beneficiary in marketplace contract.
+    Making a sell auction and fixed price transaction and checking royalties in founder vault
+    '''
+    # Setting addresses
+    CSONGOR = accounts[9]
+    PATR = accounts[8]
+    ADR = accounts[7]
+    MIKI = accounts[6]
+
+    # Miki, Csongor, Patr, Adr
+    founders = [MIKI, CSONGOR, PATR, ADR]
+    founders_pct = [50, 5, 22.5, 22.5]
+    founders_pct = [x*10000 for x in founders_pct]
+
+    # Deploying contracts
+    vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+
+    # Setting approvals
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+
+    # Setting beneficiaries
+    emograms.setBeneficiary(vault)
+
+    # Minting emograms
+    token_id_auction = 2
+    token_id_auction_nobid = 3
+    token_id_fixed = 4
+    token_id_fixed_nobuy = 5
+    sell_price = 1e18
+    bid_price = sell_price*1.1
+    auction_time = 2
+    royalty_pct = 0.075
+
+    emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
+
+    # Selling on auction bid/nobid
+    tx_auction_bid = marketplace.createAuction(token_id_auction, emograms, auction_time, sell_price, {'from': accounts[0]})
+    tx_auction_nobid = marketplace.createAuction(token_id_auction_nobid, emograms, auction_time, sell_price, {'from': accounts[0]})
+    auction_id = tx_auction_bid.return_value
+    auction_id_nobid = tx_auction_nobid.return_value
+
+    # Placing bid
+    tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
+    auction_item = marketplace.emogramsOnAuction(auction_id)
+    auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
+
+    # Finishing auctions
+    time.sleep(auction_time+1)
+    tx_finish_bid = marketplace.finishAuction(emograms, token_id_auction, auction_id, {'from': accounts[0]})
+    tx_finish_nobid = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
+
+    # Selling on fixed price, buying and no buying
+    tx_fixed = marketplace.addEmogramToMarket(token_id_fixed, emograms, sell_price, {'from': accounts[0]})
+    tx_fixed_nobuy = marketplace.addEmogramToMarket(token_id_fixed_nobuy, emograms, sell_price, {'from': accounts[0]})
+    sell_item = tx_fixed.return_value
+    sell_item_nobuy = tx_fixed_nobuy.return_value
+    tx_buy = marketplace.buyEmogram(sell_item, {'from': accounts[1], 'amount': sell_price})
+
+    assert_vault_balance = sell_price * royalty_pct # Fixed buy
+    assert_vault_balance += bid_price * royalty_pct # Auction 
+    assert int(assert_vault_balance)/1 == vault.balance()/1
+
 def test_proxy():
     '''
     Deploying contracts with proxy scheme and testing upgradability
@@ -380,8 +447,6 @@ def test_proxy():
 
 '''
 Todo:
-- cancel fix price buy
 - check emogramsOnAuction
-- check emogramsOnSale
 - proxy implementation and upgradability checks
 '''
