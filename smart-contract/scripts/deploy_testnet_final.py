@@ -5,7 +5,7 @@ from brownie.network.gas.strategies import GasNowStrategy
 
 # VARS
 INITIAL_AUCTION_DURATION = 90
-IPFS_URI = 'https://gateway.pinata.cloud/ipfs/QmQhJB3Ep5sfjaAArr5mhJeXMcycNHeJQv8qVfkaSDaHeW/{id}.json'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmRdjXwcVcxzZvoKjHy1uK6WegwGyi4WZDmsXP9p5VCrYh/{id}.json'
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 
 # WALLETS
