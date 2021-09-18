@@ -1,9 +1,8 @@
-pragma solidity ^0.8.2;
+pragma solidity 0.8.2;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeAble.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-//import "@openzeppelinUpgrades/contracts/proxy/utils/Initializable.sol";
-//import "@openzeppelinUpgrades/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/ugrades/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -62,7 +61,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         bool onAuction;
     }
 
-    initAuction initialAuction;
+    initAuction public initialAuction;
 
     // All emograms in the marketplace
     sellItem[] public emogramsOnSale;
@@ -120,6 +119,11 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
+    modifier AuctionActive(uint256 _auctionId) {
+        require(activeAuctions[emogramsOnAuction[_auctionId].tokenAddress][emogramsOnAuction[_auctionId].tokenId] == true, "Auction already finished");
+        _;
+    }
+
     // Check if the item exists
     modifier itemExists(uint256 id){
         require(id <= emogramsOnSale.length && emogramsOnSale[id].sellId == id, "Could not find item");
@@ -147,8 +151,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         initialAuction.isInitialAuction = true;
         initialAuction.cycle = 0;
     }
-
-/*     function initialize(bool _isTest) initializer public {
+    
+     function initialize(bool _isTest) initializer public {
         __AccessControl_init();
         __UUPSUpgradeable_init();
 
@@ -161,7 +165,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         initialAuction.isInitialAuction = true;
         initialAuction.cycle = 0;
     }
- */
+
     function setInitialorder(uint256[99] memory _ids) 
      public
      onlyRole(FOUNDER_ROLE) {
@@ -178,6 +182,20 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         onlyRole(DEFAULT_ADMIN_ROLE) {
 
             grantRole(FOUNDER_ROLE, msg.sender);
+        }
+
+    function emogramsOnSaleLength()
+        public
+        view
+        returns (uint256) {
+            return emogramsOnSale.length;
+        }
+
+    function emogramsOnAuctionLength()
+        public
+        view
+        returns (uint256) {
+            return emogramsOnAuction.length;
         }
 
     //Sell ID
@@ -227,6 +245,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     external 
     returns(uint256) {
         require(activeEmograms[tokenAddress][tokenId] == false, "Item is already up for sale");
+        require(activeAuctions[tokenAddress][tokenId] == false, "Item already up for auction");
         uint256 newItemId = emogramsOnSale.length;
         emogramsOnSale.push(sellItem(newItemId, tokenAddress, tokenId, payable(msg.sender), askingPrice, false));
         activeEmograms[tokenAddress][tokenId] = true;
@@ -243,6 +262,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     public {
         
         emit SellCancelled(msg.sender, emogramsOnSale[_id].tokenAddress, emogramsOnSale[_id].tokenId);
+        activeEmograms[emogramsOnSale[_id].tokenAddress][emogramsOnSale[_id].tokenId] = false;
         delete emogramsOnSale[_id];
     } 
 
@@ -267,7 +287,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
         require(sentSucces, "Failed to buy");
 
-        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, msg.sender);
+        emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, emogramsOnSale[id].seller);
     }
 
     function createAuction(uint256 _tokenId, address _tokenAddress, uint256 _duration, uint256 _startPrice) 
@@ -278,6 +298,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns (uint256) 
     {
         require(activeAuctions[_tokenAddress][_tokenId] == false, "Emogram is already up for auction");
+        require(activeEmograms[_tokenAddress][_tokenId] == false, "Item is already up for sale");
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
@@ -333,7 +354,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns(uint256)
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "Auction has already finished");
-        require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
+        require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
         if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {    
@@ -348,6 +369,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         }
 
         else {
+            require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
 
@@ -356,7 +378,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         }
     }
 
-    function stepAuctions(address _tokenAddress, uint256 _startPrice)
+    function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
     isInitialAuctionPeriod()
     onlyRole(FOUNDER_ROLE)
     payable
@@ -377,7 +399,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
         for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
 
-            createAuction(initialEmogramsorder[i], _tokenAddress, 3, _startPrice);
+            createAuction(initialEmogramsorder[i], _tokenAddress, _duration, _startPrice);
         }
 
         initialAuction.cycle = initialAuction.cycle + 1;
@@ -401,9 +423,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
             
         activeAuctions[_tokenAddress][_tokenId] = false;
-        delete emogramsOnAuction[_auctionId];
-
         emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);
+        delete emogramsOnAuction[_auctionId];
      }
 
     function endAuctionWithNoBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
@@ -412,13 +433,13 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         require(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice && emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller);
 
         activeAuctions[_tokenAddress][_tokenId] = false;
-        delete emogramsOnAuction[_auctionId];
-
-        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);         
+        emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);     
+        delete emogramsOnAuction[_auctionId];    
      }
 
     function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)
      auctionEnded(_auctionId)
+     AuctionActive(_auctionId)
      nonReentrant()
      hasTransferApproval(_tokenAddress, _tokenId)
      itemExistsAuction(_auctionId) 
