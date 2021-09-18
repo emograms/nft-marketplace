@@ -250,17 +250,59 @@ def test_auction_buy_finish():
     # Create auctions
     # account[0] - 1,3
     # account[1] - 0,2
-    marketplace.createAuction(2, emograms, auction_time, sell_price, {'from': accounts[1]})
-    marketplace.createAuction(3, emograms, auction_time, sell_price, {'from': accounts[0]})
+    current_time = int(time.time())
+    tx_auction_2 = marketplace.createAuction(2, emograms, auction_time, sell_price, {'from': accounts[1]})
+    tx_auction_3 = marketplace.createAuction(3, emograms, auction_time, sell_price, {'from': accounts[0]})
+
+    auction_2_0 = marketplace.emogramsOnAuction(tx_auction_2.return_value)
+    auction_3_0 = marketplace.emogramsOnAuction(tx_auction_3.return_value)
+
+    assert auction_2_0['auctionId'] == tx_auction_2.return_value
+    assert auction_2_0['tokenAddress'] == emograms
+    assert auction_2_0['tokenId'] == 2
+    assert auction_2_0['seller'] == accounts[1]
+    assert auction_2_0['highestBidder'] == accounts[1]
+    assert auction_2_0['startPrice'] == sell_price
+    assert auction_2_0['highestBid'] == sell_price
+    assert auction_2_0['endDate'] == current_time + auction_time
+    assert auction_2_0['onAuction'] == True
 
     # Place 2 bids from different accounts
-    marketplace.PlaceBid(0, 2, emograms, {'from': accounts[2], 'value': bid_price_1})
-    marketplace.PlaceBid(0, 2, emograms, {'from': accounts[3], 'value': bid_price_2})
-    auction_0 = marketplace.emogramsOnAuction(0)
-    auction_1 = marketplace.emogramsOnAuction(0)
-    print('auctionItem[0]: ', auction_0)
-    print('auctionItem[1]: ', auction_1)
-    
+    tx_bid_2_0 = marketplace.PlaceBid(0, 2, emograms, {'from': accounts[2], 'value': bid_price_1})
+    auction_2_0 = marketplace.emogramsOnAuction(tx_bid_2_0.return_value)
+    tx_bid_2_1 = marketplace.PlaceBid(0, 2, emograms, {'from': accounts[3], 'value': bid_price_2})
+    auction_2_1 = marketplace.emogramsOnAuction(tx_bid_2_1.return_value)
+
+    # Asserting emogramsOnAuction
+    assert auction_2_0['auctionId'] == tx_bid_2_0.return_value
+    assert auction_2_0['tokenAddress'] == emograms
+    assert auction_2_0['tokenId'] == 2
+    assert auction_2_0['seller'] == accounts[1]
+    assert auction_2_0['highestBidder'] == accounts[2]
+    assert auction_2_0['startPrice'] == sell_price
+    assert auction_2_0['highestBid'] == bid_price_1
+    assert auction_2_0['onAuction'] == True
+
+    assert auction_2_1['auctionId'] == tx_bid_2_1.return_value
+    assert auction_2_1['tokenAddress'] == emograms
+    assert auction_2_1['tokenId'] == 2
+    assert auction_2_1['seller'] == accounts[1]
+    assert auction_2_1['highestBidder'] == accounts[3]
+    assert auction_2_1['startPrice'] == sell_price
+    assert auction_2_1['highestBid'] == bid_price_2
+    assert auction_2_1['onAuction'] == True
+
+    # Asserting BidPlaced events
+    assert tx_bid_2_0.events['BidPlaced']['id'] == 0
+    assert tx_bid_2_0.events['BidPlaced']['tokenId'] == 2
+    assert tx_bid_2_0.events['BidPlaced']['bidder'] == accounts[2]
+    assert tx_bid_2_0.events['BidPlaced']['bid'] == bid_price_1
+
+    assert tx_bid_2_1.events['BidPlaced']['id'] == 0
+    assert tx_bid_2_1.events['BidPlaced']['tokenId'] == 2
+    assert tx_bid_2_1.events['BidPlaced']['bidder'] == accounts[3]
+    assert tx_bid_2_1.events['BidPlaced']['bid'] == bid_price_2
+
     # Check if the auction can be finished before endDate
     try: 
         marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
@@ -447,6 +489,5 @@ def test_proxy():
 
 '''
 Todo:
-- check emogramsOnAuction
 - proxy implementation and upgradability checks
 '''
