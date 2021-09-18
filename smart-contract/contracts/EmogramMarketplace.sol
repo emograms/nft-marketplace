@@ -62,7 +62,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         bool onAuction;
     }
 
-    initAuction initialAuction;
+    initAuction public initialAuction;
 
     // All emograms in the marketplace
     sellItem[] public emogramsOnSale;
