@@ -72,6 +72,58 @@ def test_fixed_buy_cancel():
     '''
     Testing the fixed price selling mechanism cancel function
     '''
+seller_init_balance = accounts[0].balance()
+sell_price = 1e18
+token_id_2 = 2
+# Try canceling fix price 
+emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+emograms.createEmogram({'from': accounts[0]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
+sell_id = tx_sell.return_value
+sell_item = marketplace.emogramsOnSale(sell_id)
+
+# Assert emitted EmogramAdded event
+assert tx_sell.events['EmogramAdded']['id'] == sell_id
+assert tx_sell.events['EmogramAdded']['tokenId'] == token_id_2
+assert tx_sell.events['EmogramAdded']['tokenAddress'] == emograms.address
+assert tx_sell.events['EmogramAdded']['askingPrice'] == sell_price
+
+# Assert emogramsOnSale array[0]
+assert sell_item['sellId'] == sell_id
+assert sell_item['tokenAddress'] == emograms.address
+assert sell_item['tokenId'] == token_id_2
+assert sell_item['seller'] == accounts[0]
+assert sell_item['price'] == sell_price
+assert sell_item['isSold'] == False
+
+# Assert activeEmograms
+assert marketplace.activeEmograms(emograms, 2) == True
+
+# Cancel sell
+tx_cancel = marketplace.cancelSell(sell_id)
+canceled_sell_item = marketplace.emogramsOnSale(sell_id)
+
+# Assert cancel events
+assert tx_cancel.events['SellCancelled']['sender'] == accounts[0]
+assert tx_cancel.events['SellCancelled']['tokenId'] == token_id_2
+assert tx_cancel.events['SellCancelled']['tokenAddress'] == emograms.address
+
+# Assert emogramsOnSale array[0]
+assert canceled_sell_item['sellId'] == sell_id
+assert canceled_sell_item['tokenAddress'] == '0x0000000000000000000000000000000000000000'
+assert canceled_sell_item['tokenId'] == 0
+assert canceled_sell_item['seller'] == '0x0000000000000000000000000000000000000000'
+assert canceled_sell_item['price'] == 0
+assert canceled_sell_item['isSold'] == False
+
+# Assert activeEmograms
+assert marketplace.activeEmograms(emograms, 2) == False
+
+# Assert increased emogramsOnSale id
+tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
+assert sell_id+1 == tx_sell.return_value
 
 def test_fixed_buy():
     '''
@@ -127,8 +179,6 @@ def test_fixed_buy():
     # ETH balance checks
     assert accounts[1].balance() == seller_init_balance_1 + sell_price - (sell_price*royalty_pct)
     assert accounts[2].balance() == buyer_init_balance - sell_price
-
-
 
 def test_auction_cancel():
     '''
