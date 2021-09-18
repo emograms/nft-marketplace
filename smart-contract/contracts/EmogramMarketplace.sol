@@ -354,7 +354,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     returns(uint256)
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "Auction has already finished");
-        require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
+        require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
         if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {    
