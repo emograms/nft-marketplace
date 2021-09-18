@@ -263,6 +263,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
     public {
         
         emit SellCancelled(msg.sender, emogramsOnSale[_id].tokenAddress, emogramsOnSale[_id].tokenId);
+        activeEmograms[emogramsOnSale[_id].tokenAddress][emogramsOnSale[_id].tokenId] = false;
         delete emogramsOnSale[_id];
     } 
 
