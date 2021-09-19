@@ -36,6 +36,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     string public symbol = "EGRAMS";
 
     mapping(uint256 => address) public ownerOfById;
+    mapping(uint256 => bytes32) public hashes;
 
 
     //If the token indentified by id is redeemable this is true,
