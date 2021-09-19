@@ -29,7 +29,7 @@ for lines in file:
     image = lines.split(" ")[1].strip()
     dictToWrite = {'name': name,
                    'image': image,
-                   'description': "",
+                   'description': hashes[start - 2],
                    'external_url': (external_url + str(start))}
     name = "JSONs_ID/" + str(start)
     start = start + 1               
