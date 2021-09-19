@@ -32,6 +32,9 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     // a new Emogram NFT
     uint public emogramId = 2;
 
+    string public name = "Emograms";
+    string public symbol = "EGRAMS";
+
     mapping(uint256 => address) public ownerOfById;
 
 
