@@ -18,7 +18,7 @@ uuids_str = []
 for x in range(0,101):
     uuids_obj.append(uuid.uuid4())
     uuids_str.append(str(uuids_obj[x]))
-    hashes_str.append()
+    hashes_str.append(hashlib.sha256(uuids_str[x].encode()).hexdigest())
 
 
 file = open("/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/test/json_test.txt", 'r')
@@ -29,7 +29,7 @@ for lines in file:
     image = lines.split(" ")[1].strip()
     dictToWrite = {'name': name,
                    'image': image,
-                   'description': hashes[start - 2],
+                   'description': hashes_str[start - 2],
                    'external_url': (external_url + str(start))}
     name = "JSONs_ID/" + str(start)
     start = start + 1               

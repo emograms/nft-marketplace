@@ -75,6 +75,7 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     event SculptureRedeemed(uint256 indexed _tokenId, address indexed _redeemer);
     event NonFungibleTokenMinted(address indexed _minter, uint256 indexed _tokenid);
     event BeneficiaryChanged(address indexed _newBeneficiary);
+    event TokensDistributedSRT(address indexed _distributor);
 
     constructor() ERC1155("") {
 
@@ -179,6 +180,21 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     returns (bool) {
 
         mint(msg.sender, SRT, 110, "");
+        return true;
+    }
+
+    // Function to distribute the SRT tokens after the initial auction
+    // The distributor should have the necessary number of SRT tokens (99)
+    function distributeSRT(address _distributor)
+    public
+    onlyRole(MINTER_ROLE)
+    returns (bool) {
+        require(balanceOf(_distributor, SRT) >= 99, "Not enough token to distribute");
+        
+        for(uint i = 2; i < 101; i++) {
+            safeTransferFrom(_distributor, ownerOfById[i], SRT, 1, "");
+        }
+        emit TokensDistributedSRT(_distributor);
         return true;
     }
 
