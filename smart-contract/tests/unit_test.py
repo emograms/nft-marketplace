@@ -490,4 +490,5 @@ def test_proxy():
 '''
 Todo:
 - proxy implementation and upgradability checks
+- vault eth distribution asserts
 '''
