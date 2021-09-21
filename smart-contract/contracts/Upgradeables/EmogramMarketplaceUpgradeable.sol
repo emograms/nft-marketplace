@@ -1,18 +1,19 @@
 pragma solidity 0.8.2;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeAble.sol";
+import "./upgrades/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/ugrades/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./upgrades/proxy/utils/UUPSUpgradeable.sol";
+import "./upgrades/proxy/utils/Initializable.sol";
+import "./upgrades/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
 
- contract EmogramMarketplaceUpgradeable is AccessControl, UUPSUpgradeable, Initializable, ReentrancyGuard, ERC165Storage {
+ contract EmogramMarketplaceUpgradeable is 
+ Initializable, UUPSUpgradeable, ERC165StorageUpgradeable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
 
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     bytes4 constant ERC2981ID = 0x2a55205a;
 
@@ -142,7 +143,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         _;
     }
 
-    constructor(bool _isTest) {
+/*     constructor(bool _isTest) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
 
@@ -151,14 +152,18 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 
         initialAuction.isInitialAuction = true;
         initialAuction.cycle = 0;
-    }
+    } */
     
      function initialize(bool _isTest) initializer public {
+        
         __AccessControl_init();
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+        __ERC165Storage_init();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(FOUNDER_ROLE, msg.sender);
+        _setupRole(UPGRADER_ROLE, msg.sender);
 
         _registerInterface(ERC2981ID);
         isTestPeriod = _isTest;
@@ -471,10 +476,15 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
         return isTestPeriod;
     }
 
+    function _authorizeUpgrade(address) 
+     internal 
+     override
+     onlyRole(UPGRADER_ROLE) {}
+
     function supportsInterface(bytes4 interfaceId)
      public
      view
-     override(AccessControl, ERC165Storage)
+     override(AccessControlUpgradeable, ERC165StorageUpgradeable)
      returns (bool) {
         
         return super.supportsInterface(interfaceId);
