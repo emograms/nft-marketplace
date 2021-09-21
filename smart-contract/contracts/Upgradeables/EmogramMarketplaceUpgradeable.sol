@@ -489,6 +489,4 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
         
         return super.supportsInterface(interfaceId);
     }
-    
-    receive() external payable {}
 }
