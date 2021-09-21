@@ -253,10 +253,10 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         emit SculptureRedeemed(_tokenId, msg.sender);
     }
 
-    function verifyOrig(string memory _origString, uint256 _tokenId)
+    function verifyOrig(bytes memory _origString, uint256 _tokenId)
     public 
     returns (bool) {
-        if(sha256(bytes(_origString)) == originalityHash[_tokenId]) {
+        if(sha256(_origString) == originalityHash[_tokenId]) {
             return true;
          }
         else {
