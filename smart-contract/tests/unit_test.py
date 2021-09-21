@@ -1,7 +1,7 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, FounderVault, accounts
+from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accounts
 
 
 def test_deploy():
@@ -508,7 +508,7 @@ def test_proxy():
     '''
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
-    proxy = EmogramsMarketplaceProxy.deploy(accounts[0], marketplace, {'from': accounts[0]})
+    #proxy = EmogramsMarketplaceProxy.deploy(accounts[0], marketplace, {'from': accounts[0]})
     #assert '' in tx.events
     #proxy.upgradeTo(marketplace.address)
     #assert proxy. == marketplace.address

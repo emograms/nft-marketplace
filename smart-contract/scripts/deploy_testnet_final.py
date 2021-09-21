@@ -1,6 +1,6 @@
 import os
 import time
-from brownie import EmogramsCollectible, EmogramMarketplace, EmogramsMarketplaceProxy, FounderVault, accounts, network
+from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accounts, network
 from brownie.network.gas.strategies import GasNowStrategy
 
 # VARS
