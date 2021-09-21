@@ -1,7 +1,7 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplace, accounts
+from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, accounts, ERC1967Proxy, Contract
 
 
 def test_deploy():
@@ -9,7 +9,10 @@ def test_deploy():
     Deployment steps with assertion of contract roles
     '''
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace_encoded_init_function = encoded_function_data(initializer=marketplace.initialize(True))
+    proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]})
+
 
     def assert_contract_roles(contract, role_list, account):
         '''
