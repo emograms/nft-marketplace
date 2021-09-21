@@ -1,12 +1,7 @@
 pragma solidity 0.8.2;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeAble.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-<<<<<<< Updated upstream
-=======
-import "@openzeppelin/ugrades/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
->>>>>>> Stashed changes
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
