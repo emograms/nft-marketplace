@@ -40,6 +40,14 @@ def test_deploy():
     # Check if base percentage is 7.5% (uint 750)
     assert emograms.BASE_PERCENTAGE() == 750
 
+def test_name_symbol():
+    '''
+    Test deployed name and symbol
+    '''
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    assert emograms.symbol() == 'EGRAMS'
+    assert emograms.name() == 'Emograms'
+
 
 def test_check_balances_nft_srt():
     '''
@@ -51,6 +59,24 @@ def test_check_balances_nft_srt():
     for i in range(1, 100):
         assert emograms.balanceOf(accounts[0], i, {'from': accounts[0]}) == 0
 
+def test_ownerOf_ownerOfById():
+    '''
+    Testing ownerOf and ownerOfById functions
+    '''
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    assert emograms.ownerOf(2, accounts[0]) == False
+    assert emograms.ownerOfById(2) == '0x0000000000000000000000000000000000000000'
+    
+    emograms.createEmogram({'from': accounts[0]})
+    assert emograms.ownerOf(2, accounts[0]) == True
+    assert emograms.ownerOf(2, accounts[1]) == False
+    assert emograms.ownerOf(1, accounts[1]) == False
+    assert emograms.ownerOf(1, accounts[0]) == False
+    assert emograms.ownerOfById(2) == accounts[0]
+    
+    emograms.createFunToken(1, 1, {'from': accounts[0]})
+    assert emograms.ownerOf(1, accounts[0]) == True
+    assert emograms.ownerOfById(1) == accounts[0]
 
 def test_minting():
     '''
@@ -491,4 +517,6 @@ def test_proxy():
 Todo:
 - proxy implementation and upgradability checks
 - vault eth distribution asserts
+- set originality
+- token distribution SRT
 '''
