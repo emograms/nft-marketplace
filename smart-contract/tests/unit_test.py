@@ -1,7 +1,24 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplace, FounderVault, accounts
+import eth_utils
+from brownie import EmogramsCollectible, EmogramMarketplaceUpgradable, FounderVault, accounts
+
+def encode_function_data(initializer=None, *args):
+    """Encodes the function call so we can work with an initializer.
+    Args:
+        initializer ([brownie.network.contract.ContractTx], optional):
+        The initializer function we want to call. Example: `box.store`.
+        Defaults to None.
+        args (Any, optional):
+        The arguments to pass to the initializer function
+    Returns:
+        [bytes]: Return the encoded bytes.
+    """
+    if len(args) == 0 or not initializer:
+        return eth_utils.to_bytes(hexstr="0x")
+    else:
+        return initializer.encode_input(*args)
 
 
 def test_deploy():
@@ -502,16 +519,28 @@ def test_founder_vault_royalties():
     assert_vault_balance += bid_price * royalty_pct # Auction 
     assert int(assert_vault_balance)/1 == vault.balance()/1
 
-def test_proxy():
+def test_proxy_deploy():
     '''
-    Deploying contracts with proxy scheme and testing upgradability
+    Deploying contracts with proxy scheme and testing interactions
     '''
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
-    #proxy = EmogramsMarketplaceProxy.deploy(accounts[0], marketplace, {'from': accounts[0]})
-    #assert '' in tx.events
-    #proxy.upgradeTo(marketplace.address)
-    #assert proxy. == marketplace.address
+    marketplace = EmogramMarketplaceUpgradable.deploy({'from': accounts[0]})
+    marketplace_encoded_init_function = encode_function_data(True)
+    proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]})
+    proxy_abi = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
+    proxy_abi.initialize(True, {'from': accounts[0]})
+    emograms.createEmogram({'from': accounts[0]})
+    emograms.setApprovalForAll(proxy_abi, True, {'from': accounts[0]})
+    proxy_abi.addEmogramToMarket(2, emograms, 1e18, {'from': accounts[0]})
+    sale = proxy_abi.emogramsOnSale(0)
+
+    assert sale['sellId'] == 0
+    assert sale['tokenAddress'] == emograms
+    assert sale['tokenId'] == 2
+    assert sale['seller'] == accounts[0]
+    assert sale['price'] == 1e18
+    assert sale['isSold'] == False
+    
 
 '''
 Todo:
