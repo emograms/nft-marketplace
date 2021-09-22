@@ -1,7 +1,7 @@
 import time
 import random
 from os import initgroups
-from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, accounts, ERC1967Proxy, Contract
+from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, accounts
 
 
 def test_deploy():
@@ -80,7 +80,7 @@ def test_fixed_buy():
     seller_init_balance = accounts[0].balance()
     sell_price = 1e18
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     marketplace.addEmogramToMarket(
@@ -123,7 +123,7 @@ def test_auction_cancel():
     '''
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     marketplace.createAuction(2, emograms, 10, 1e18, {'from': accounts[0]})
@@ -152,7 +152,7 @@ def test_auction_buy_finish():
     bid_price_2 = 1.2e18
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
@@ -213,7 +213,7 @@ def test_initial_auction():
     bid_price = 1.1e18
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy(True, {'from': accounts[0]})
     
     initial_auction_prices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     for i in range(0, 33-len(initial_auction_prices)):

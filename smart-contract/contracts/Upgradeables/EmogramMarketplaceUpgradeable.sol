@@ -24,8 +24,6 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
         uint256 cycle;
     }
 
-    bool public isInitialAuction = true;
-
     // Struct for a fixed price sell
     // sellId - Id of the sale
     // tokenAddress - the address of the token contract
@@ -392,7 +390,7 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
      {
         require(initialAuction.cycle <= 33, "Max cycles already reached");
 
-        if(emogramsOnAuction.length == 3) {
+        if(emogramsOnAuction.length == initialAuction.cycle * 3)) {
             for(uint i = 0; i < 3; i++) {
                 if(emogramsOnAuction[i].highestBidder == msg.sender) {
                     endAuctionWithNoBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
