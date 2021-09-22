@@ -2,7 +2,7 @@ import time
 import random
 from os import initgroups
 import eth_utils
-from brownie import EmogramsCollectible, EmogramMarketplaceUpgradable, FounderVault, accounts
+from brownie import *
 
 def encode_function_data(initializer=None, *args):
     """Encodes the function call so we can work with an initializer.
@@ -524,7 +524,7 @@ def test_proxy_deploy():
     Deploying contracts with proxy scheme and testing interactions
     '''
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplaceUpgradable.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
     marketplace_encoded_init_function = encode_function_data(True)
     proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]})
     proxy_abi = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
@@ -541,10 +541,36 @@ def test_proxy_deploy():
     assert sale['price'] == 1e18
     assert sale['isSold'] == False
     
+def test_proxy_upgrade():
+    '''
+    Deploying a proxy scheme and upgrading with a modified contract version
+    '''
+
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace_encoded_init_function = encode_function_data(True)
+    proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]})
+    proxy_abi = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
+    proxy_abi.initialize(True, {'from': accounts[0]})
+    emograms.createEmogram({'from': accounts[0]})
+    emograms.setApprovalForAll(proxy_abi, True, {'from': accounts[0]})
+    proxy_abi.addEmogramToMarket(2, emograms, 1e18, {'from': accounts[0]})
+    print(proxy_abi.emogramsOnSale(0))
+    sale_data = proxy_abi.emogramsOnSale(0)
+
+    assert proxy_abi.emogramsOnSaleLength() == 1
+
+    marketplace_v2 = EmogramMarketplaceUpgradeable_UpgradeTest.deploy({'from': accounts[0]})
+    proxy_abi.upgradeTo(marketplace_v2, {'from': accounts[0]})
+    proxy_abi_v2 = Contract.from_abi("EmogramMarketplaceUpgradeable_UpgradeTest", proxy.address, EmogramMarketplaceUpgradeable_UpgradeTest.abi)
+
+    assert proxy_abi_v2.emogramsOnSaleLength() == 2
+    newfunction = proxy_abi_v2.newFunction()
+    assert newfunction == 'Upgraded'
+    assert sale_data == proxy_abi_v2.emogramsOnSale(0)
 
 '''
 Todo:
-- proxy implementation and upgradability checks
 - vault eth distribution asserts
 - set originality
 - token distribution SRT
