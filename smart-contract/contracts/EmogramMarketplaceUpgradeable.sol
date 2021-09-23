@@ -144,17 +144,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         _;
     }
 
-/*     constructor(bool _isTest) {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(FOUNDER_ROLE, msg.sender);
-
-        _registerInterface(ERC2981ID);
-        isTestPeriod = _isTest;
-
-        initialAuction.isInitialAuction = true;
-        initialAuction.cycle = 0;
-    } */
-    
     function initialize(bool _isTest) initializer public {
         
         __AccessControl_init();
