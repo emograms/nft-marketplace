@@ -99,7 +99,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     }
 
     // Check if marketplace has approval to sell/buy on behalf of the caller
-    // TODO: Add royalty check here
     modifier hasTransferApproval (address tokenAddress, uint256 tokenId) {
         IERC1155 tokenContract = IERC1155(tokenAddress);
         require(tokenContract.isApprovedForAll(msg.sender, address(this)) == true, "No Approval");
