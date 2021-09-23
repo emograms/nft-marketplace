@@ -19,51 +19,11 @@ print("Fast Gas Price: ")
 print(str(gas_strategy.get_gas_price()) + " wei \n")
 
 emograms = EmogramsCollectible.deploy({'from': PATR})
-emograms2 = EmogramsCollectible.deploy({'from': PATR})
-emograms3 = EmogramsCollectible.deploy({'from': PATR})
-emograms4 = EmogramsCollectible.deploy({'from': PATR})
-emograms5 = EmogramsCollectible.deploy({'from': PATR})
-emograms6 = EmogramsCollectible.deploy({'from': PATR})
 
 emograms.createFunToken(1, 1, {'from': PATR})
 
 for i in range(0, 3):
     emograms.createEmogram({'from': PATR})
 
-emograms2.createFunToken(1, 1, {'from': PATR})
-
-for i in range(0, 3):
-    emograms2.createEmogram({'from': PATR})
-
-emograms3.createFunToken(1, 1, {'from': PATR})
-
-for i in range(0, 3):
-    emograms3.createEmogram({'from': PATR})
-
-emograms4.createFunToken(1, 1, {'from': PATR})
-
-for i in range(0, 3):
-    emograms4.createEmogram({'from': PATR})
-
-emograms5.createFunToken(1, 1, {'from': PATR})
-
-for i in range(0, 3):
-    emograms5.createEmogram({'from': PATR})
-
-emograms6.createFunToken(1, 1, {'from': PATR})
-
-for i in range(0, 3):
-    emograms6.createEmogram({'from': PATR})
-
-emograms.setURI("ipfs://QmQsnoBbhrvxDJuwFG32CjEWNDQJTgEtgQ24BcUTTTFhzX/", {'from': PATR, 'gas_price': gas_strategy})
-print("URI1 SET")
-emograms2.setURI("https://cloudflare-ipfs.com/ipfs/QmQsnoBbhrvxDJuwFG32CjEWNDQJTgEtgQ24BcUTTTFhzX/", {'from': PATR, 'gas_price': gas_strategy})
-print("URI2 SET")
-emograms3.setURI("https://cloudflare-ipfs.com/ipfs/QmQsnoBbhrvxDJuwFG32CjEWNDQJTgEtgQ24BcUTTTFhzX/{id}/", {'from': PATR, 'gas_price': gas_strategy})
-print("URI3 SET")
-emograms4.setURI("ipfs://QmPAPuuiuoqX4gQTbk1jMDHgRe8LML5Bd1beUrM3RDswVq/", {'from': PATR, 'gas_price': gas_strategy})
-print("URI4 SET")
-emograms5.setURI("https://cloudflare-ipfs.com/ipfs/QmPAPuuiuoqX4gQTbk1jMDHgRe8LML5Bd1beUrM3RDswVq/", {'from': PATR, 'gas_price': gas_strategy})
-print("URI5 SET")
-emograms6.setURI("https://cloudflare-ipfs.com/ipfs/QmPAPuuiuoqX4gQTbk1jMDHgRe8LML5Bd1beUrM3RDswVq/{id}/", {'from': PATR, 'gas_price': gas_strategy})
+emograms.setURI("https://cloudflare-ipfs.com/ipfs/QmXxU89wFqCBdWrcyjQ4ZbvC6KNZkGpwXvsn9VCUjaoEPK/{id}/", {'from': PATR, 'gas_price': gas_strategy})
 print("URI6 SET")

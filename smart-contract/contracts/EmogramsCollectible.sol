@@ -17,6 +17,9 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
     bytes4 constant ERC165ID = 0x01ffc9a7;
     bytes4 constant ERC2981ID = 0x2a55205a;
 
+    string constant public name = "Emograms";
+    string constant public symbol = "EMOG";
+
     // Royalty Base Percentage 7.5%
     // Royalty beneficiary address
     uint256 public BASE_PERCENTAGE = 750;
