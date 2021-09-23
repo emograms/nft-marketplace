@@ -142,17 +142,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         require(emogramsOnSale[id].isSold == false, "Item is already sold");
         _;
     }
-
-/*     constructor(bool _isTest) {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(FOUNDER_ROLE, msg.sender);
-
-        _registerInterface(ERC2981ID);
-        isTestPeriod = _isTest;
-
-        initialAuction.isInitialAuction = true;
-        initialAuction.cycle = 0;
-    } */
     
      function initialize(bool _isTest) initializer public {
         
@@ -203,6 +192,20 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         returns (uint256) {
             return emogramsOnAuction.length;
         }
+
+    function getSaleArray()
+     public
+     view
+     returns (sellItem[]) {
+         return emogramsOnSale;
+     }
+
+    function getAuctionArray()
+     public
+     view
+     returns (auctionItem[]) {
+         return emogramsOnAuction;
+     }
 
     //Sell ID
     //transfers royalty to receiver
