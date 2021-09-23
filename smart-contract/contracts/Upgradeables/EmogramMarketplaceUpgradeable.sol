@@ -390,7 +390,7 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
      {
         require(initialAuction.cycle <= 33, "Max cycles already reached");
 
-        if(emogramsOnAuction.length == initialAuction.cycle * 3)) {
+        if(emogramsOnAuction.length == initialAuction.cycle * 3) {
             for(uint i = 0; i < 3; i++) {
                 if(emogramsOnAuction[i].highestBidder == msg.sender) {
                     endAuctionWithNoBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
