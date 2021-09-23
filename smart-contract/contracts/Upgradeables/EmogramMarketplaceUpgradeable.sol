@@ -205,14 +205,14 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
     function getSaleArray()
      public
      view
-     returns (sellItem[]) {
+     returns (sellItem[] memory) {
          return emogramsOnSale;
      }
 
     function getAuctionArray()
      public
      view
-     returns (auctionItem[]) {
+     returns (auctionItem[] memory) {
          return emogramsOnAuction;
      }
 
