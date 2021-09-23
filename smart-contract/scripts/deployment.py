@@ -21,20 +21,28 @@ PRIVATE_KEY_GOERLI_ADR = '5ffe2515807d0ace67c342183c6aa506f25553d7fa0e93ceeb4d9b
 PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'    #'0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
 
 # Deployed contracts if there are such
-EMOGRAMMARKETPLACEUPGRADEABLE = '0x300c6828eEFAefb3C31269eD0463D86E6B4B0eC5'
-EMOGRAMSCOLLECTIBLE = '0x39FF6aA0791cD8E85C64594e08f4deC9Bbd7783A'
-FOUNDERVAULT = '0x712446f24c4511F391b590Eb885BB9dAC5C58944'
-PROXY = ''
+# EMOGRAMMARKETPLACEUPGRADEABLE = '0x300c6828eEFAefb3C31269eD0463D86E6B4B0eC5'
+# EMOGRAMSCOLLECTIBLE = '0x39FF6aA0791cD8E85C64594e08f4deC9Bbd7783A'
+# FOUNDERVAULT = '0x712446f24c4511F391b590Eb885BB9dAC5C58944'
+# PROXY = ''
 
 # Loading DEPLOYMENT_JSON_PATH for contract loading 
-DEPLOYMENT_JSON_PATH = '.latest_deployment.json'
-if os.path.isfile(DEPLOYMENT_JSON_PATH):
-    with open(DEPLOYMENT_JSON_PATH) as json_file:
-        deploymen_json = json.load(json_file)
-    EMOGRAMMARKETPLACEUPGRADEABLE_JSON = deploymen_json['EMOGRAMMARKETPLACEUPGRADEABLE']
-    EMOGRAMSCOLLECTIBLE_JSON = deploymen_json['EMOGRAMSCOLLECTIBLE']
-    FOUNDERVAULT_JSON = deploymen_json['FOUNDERVAULT']
-    PROXY_JSON = deploymen_json['PROXY']
+def loadJSON():
+    if os.path.isfile(DEPLOYMENT_JSON_PATH):
+        with open(DEPLOYMENT_JSON_PATH) as json_file:
+            deploymen_json = json.load(json_file)
+        EMOGRAMMARKETPLACEUPGRADEABLE_JSON = deploymen_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE']
+        EMOGRAMSCOLLECTIBLE_JSON = deploymen_json[network.show_active()]['EMOGRAMSCOLLECTIBLE']
+        FOUNDERVAULT_JSON = deploymen_json[network.show_active()]['FOUNDERVAULT']
+        PROXY_JSON = deploymen_json[network.show_active()]['PROXY']
+
+        return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON
+    else:
+        return 0, 0, 0, 0
+
+# Loading
+DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
+EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
 
 # Init deployer address
 accounts.add(PRIVATE_KEY_GOERLI_MIKI)
@@ -111,6 +119,7 @@ def encode_function_data(initializer=None, *args):
     
 def load_deployed_contracts(withProxy=True, fromJSON=True):
     if fromJSON:
+        EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
         emograms = Contract(EMOGRAMSCOLLECTIBLE_JSON)
         marketplace = Contract(EMOGRAMMARKETPLACEUPGRADEABLE_JSON)
         vault = Contract(FOUNDERVAULT_JSON)
@@ -130,23 +139,23 @@ def load_deployed_contracts(withProxy=True, fromJSON=True):
 def deploy_network(withProxy=True, testMode=False, publishSource=True):
 
     # Deploying contracts
-    emograms = EmogramsCollectible.deploy({'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")}, publish_source=publishSource)
+    emograms = EmogramsCollectible.deploy({'from': DEPLOYER, 'gas_price': gas_input}, publish_source=publishSource)
     
     if withProxy:
-        marketplace_contract = EmogramMarketplaceUpgradeable.deploy({'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")}, publish_source=publishSource)
+        marketplace_contract = EmogramMarketplaceUpgradeable.deploy({'from': DEPLOYER, 'gas_price': gas_input}, publish_source=publishSource)
         marketplace_encoded_init_function = encode_function_data(True)
-        proxy = ERC1967Proxy.deploy(marketplace_contract, marketplace_encoded_init_function, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")}, publish_source=publishSource)
+        proxy = ERC1967Proxy.deploy(marketplace_contract, marketplace_encoded_init_function, {'from': DEPLOYER, 'gas_price': gas_input}, publish_source=publishSource)
         marketplace = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
-        marketplace.initialize(testMode, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+        marketplace.initialize(testMode, {'from': DEPLOYER, 'gas_price': gas_input})
     else:
-        marketplace = EmogramMarketplaceUpgradeable.deploy({'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")}, publish_source=publishSource)
-        marketplace.initialize(testMode, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+        marketplace = EmogramMarketplaceUpgradeable.deploy({'from': DEPLOYER, 'gas_price': gas_input}, publish_source=publishSource)
+        marketplace.initialize(testMode, {'from': DEPLOYER, 'gas_price': gas_input})
 
     # Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
     founders_pct = [50, 5, 22.5, 22.5]
     founders_pct = [x*10000 for x in founders_pct]
-    vault = FounderVault.deploy(founders, founders_pct, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")}, publish_source=publishSource)
+    vault = FounderVault.deploy(founders, founders_pct, {'from': DEPLOYER, 'gas_price': gas_input}, publish_source=publishSource)
 
     print("Contracts deployed on:", network.show_active())
 
@@ -156,20 +165,28 @@ def deploy_network(withProxy=True, testMode=False, publishSource=True):
     initial_auction_order = [x for x in range(2,101)]
     random.shuffle(initial_auction_order)
     assert len(initial_auction_order) == 99
-    marketplace.setInitialorder(initial_auction_order, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    marketplace.setInitialorder(initial_auction_order, {'from': DEPLOYER, 'gas_price': gas_input})
     # Set marketplace URI
-    emograms.setURI(IPFS_URI, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    emograms.setURI(IPFS_URI, {'from': DEPLOYER, 'gas_price': gas_input})
 
     # Saving deployment json
     deployed_contracts_json = {}
-    deployed_contracts_json['EMOGRAMMARKETPLACEUPGRADEABLE'] = marketplace.address
-    deployed_contracts_json['EMOGRAMSCOLLECTIBLE'] = emograms.address
-    deployed_contracts_json['FOUNDERVAULT'] = vault.address
-    if withProxy:
-        deployed_contracts_json['PROXY'] = proxy.address
+    if 'mainnet' not in deployed_contracts_json: deployed_contracts_json['mainnet'] = {} 
+    if 'goerli' not in deployed_contracts_json: deployed_contracts_json['goerli'] = {}
+    if 'rinkeby' not in deployed_contracts_json: deployed_contracts_json['rinkeby'] = {}
+    if 'kovan' not in deployed_contracts_json: deployed_contracts_json['kovan'] = {}
+    if 'ropsten' not in deployed_contracts_json: deployed_contracts_json['ropsten'] = {}
+    if 'development' not in deployed_contracts_json: deployed_contracts_json['development'] = {}
+    deployed_contracts_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE'] = marketplace.address
+    deployed_contracts_json[network.show_active()]['EMOGRAMSCOLLECTIBLE'] = emograms.address
+    deployed_contracts_json[network.show_active()]['FOUNDERVAULT'] = vault.address
+    try: 
+        deployed_contracts_json[network.show_active()]['PROXY'] = proxy.address
+    except:
+        deployed_contracts_json[network.show_active()]['PROXY'] = ''
 
-    with open('latest_deployment.json', 'w') as outfile:
-        json.dump(deployed_contracts_json, outfile)
+    with open(DEPLOYMENT_JSON_PATH, 'w') as outfile:
+        json.dump(deployed_contracts_json, outfile, indent=4, sort_keys=True)
 
     return emograms, marketplace, vault
 
@@ -178,7 +195,7 @@ def mint_tokens(emograms, marketplace):
     mint_token_ids = list(range(1, 101))
     mint_amounts = [1 for i in range(99)]
     mint_amounts.insert(0,110)  # Insert SRT amounts
-    emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", {'from': DEPLOYER, 'gas_price': gas_input})
 
     # Checking total of Emogram tokens number
     y = 0
@@ -189,24 +206,24 @@ def mint_tokens(emograms, marketplace):
 
 def approve_addresses(emograms, marketplace):
     # Approve addreses
-    emograms.setApprovalForAll(marketplace, True, {'from': MIKI, 'gas_price': GasNowStrategy("fast")})
-    emograms.setApprovalForAll(marketplace, True, {'from': CSONGOR, 'gas_price': GasNowStrategy("fast")})
-    emograms.setApprovalForAll(marketplace, True, {'from': PATR, 'gas_price': GasNowStrategy("fast")})
-    emograms.setApprovalForAll(marketplace, True, {'from': ADR, 'gas_price': GasNowStrategy("fast")})
-    emograms.setApprovalForAll(marketplace, True, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    emograms.setApprovalForAll(marketplace, True, {'from': MIKI, 'gas_price': gas_input})
+    emograms.setApprovalForAll(marketplace, True, {'from': CSONGOR, 'gas_price': gas_input})
+    emograms.setApprovalForAll(marketplace, True, {'from': PATR, 'gas_price': gas_input})
+    emograms.setApprovalForAll(marketplace, True, {'from': ADR, 'gas_price': gas_input})
+    emograms.setApprovalForAll(marketplace, True, {'from': DEPLOYER, 'gas_price': gas_input})
 
 def distribute_few_tokens(emograms):
 
     print('Distributing tokens to MIKI, CSONGOR, PATR, ADR...')
     # Emogram Tokens and SRTs
-    emograms.safeBatchTransferFrom(DEPLOYER, MIKI, [1,2,3], [1,1,1],'', {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
-    emograms.safeBatchTransferFrom(DEPLOYER, CSONGOR, [1,4,5], [1,1,1],'', {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
-    emograms.safeBatchTransferFrom(DEPLOYER, PATR, [1,6,7], [1,1,1],'', {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
-    emograms.safeBatchTransferFrom(DEPLOYER, ADR, [1,8,9], [1,1,1],'', {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    emograms.safeBatchTransferFrom(DEPLOYER, MIKI, [1,2,3], [1,1,1],'', {'from': DEPLOYER, 'gas_price': gas_input})
+    emograms.safeBatchTransferFrom(DEPLOYER, CSONGOR, [1,4,5], [1,1,1],'', {'from': DEPLOYER, 'gas_price': gas_input})
+    emograms.safeBatchTransferFrom(DEPLOYER, PATR, [1,6,7], [1,1,1],'', {'from': DEPLOYER, 'gas_price': gas_input})
+    emograms.safeBatchTransferFrom(DEPLOYER, ADR, [1,8,9], [1,1,1],'', {'from': DEPLOYER, 'gas_price': gas_input})
 
 def distribute_ether(to, amount=2e18):
 
-    DEPLOYER.transfer(to, amount, {'gas_price': GasNowStrategy("fast")})
+    DEPLOYER.transfer(to, amount, {'gas_price': gas_input})
 
 def run_initialAuction_cycles(emograms, marketplace, duration=INITIAL_AUCTION_DURATION):
 
@@ -227,4 +244,4 @@ def run_initialAuction_cycles(emograms, marketplace, duration=INITIAL_AUCTION_DU
 
     # Start iterating over initial auction cycles
     print('Auction cycle #%s' %(auction_cycle+1), ' Start price: ', initial_auction_prices_e18[0])
-    marketplace.stepAuctions(emograms, initial_auction_prices_e18[0], duration, {'from': DEPLOYER, 'gas_price': GasNowStrategy("fast")})
+    marketplace.stepAuctions(emograms, initial_auction_prices_e18[0], duration, {'from': DEPLOYER, 'gas_price': gas_input})
