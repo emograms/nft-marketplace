@@ -202,6 +202,20 @@ import "./upgrades/utils/introspection/ERC165StorageUpgradeable.sol";
             return emogramsOnAuction.length;
         }
 
+    function getSaleArray()
+     public
+     view
+     returns (sellItem[]) {
+         return emogramsOnSale;
+     }
+
+    function getAuctionArray()
+     public
+     view
+     returns (auctionItem[]) {
+         return emogramsOnAuction;
+     }
+
     //Sell ID
     //transfers royalty to receiver
     //returns the amount to send to the seller and the seller
