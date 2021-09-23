@@ -76,6 +76,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
     mapping(address => mapping(uint256 => bool)) public activeAuctions;
 
+    // Events
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
     event SellCancelled(address indexed sender, address indexed tokenAddress, uint256 indexed tokenId);
     event EmogramSold (uint256 indexed id, uint256 indexed tokenId, address indexed buyer, uint256 askingPrice, address seller);
@@ -154,7 +155,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         initialAuction.cycle = 0;
     } */
     
-     function initialize(bool _isTest) initializer public {
+    function initialize(bool _isTest) initializer public {
         
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -173,8 +174,8 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     }
 
     function setInitialorder(uint256[99] memory _ids) 
-     public
-     onlyRole(FOUNDER_ROLE) {
+    public
+    onlyRole(FOUNDER_ROLE) {
          require(_ids.length == 99, "id length mismatch");
          for(uint256 i = 0; i < _ids.length; i++) {
              initialEmogramsorder[i] = _ids[i];
@@ -184,25 +185,39 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
     // Add new founders
     function addFounder(address _newFounder)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE) {
+    public
+    onlyRole(DEFAULT_ADMIN_ROLE) {
 
             grantRole(FOUNDER_ROLE, msg.sender);
         }
 
     function emogramsOnSaleLength()
-        public
-        view
-        returns (uint256) {
+    public
+    view
+    returns (uint256) {
             return emogramsOnSale.length;
         }
 
     function emogramsOnAuctionLength()
-        public
-        view
-        returns (uint256) {
+    public
+    view
+    returns (uint256) {
             return emogramsOnAuction.length;
         }
+
+    function getSaleArray()
+    public
+    view
+    returns (sellItem[] memory) {
+          return emogramsOnSale;
+      }
+
+     function getAuctionArray()
+    public
+    view
+    returns (auctionItem[] memory) {
+          return emogramsOnAuction;
+      }
 
     //Sell ID
     //transfers royalty to receiver
@@ -444,13 +459,13 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
      }
 
     function finishAuction(address _tokenAddress, uint256 _tokenId, uint256 _auctionId)
-     auctionEnded(_auctionId)
-     AuctionActive(_auctionId)
-     nonReentrant()
-     hasTransferApproval(_tokenAddress, _tokenId)
-     itemExistsAuction(_auctionId) 
-     public
-     returns (bool)
+    auctionEnded(_auctionId)
+    AuctionActive(_auctionId)
+    nonReentrant()
+    hasTransferApproval(_tokenAddress, _tokenId)
+    itemExistsAuction(_auctionId) 
+    public
+    returns (bool)
      {
         IERC1155 tokenContract = IERC1155(_tokenAddress);
         require(tokenContract.balanceOf(msg.sender, _tokenId) != 0 || emogramsOnAuction[_auctionId].highestBidder == msg.sender, "Not the owner or highest bidder");
@@ -477,15 +492,15 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     }
 
     function _authorizeUpgrade(address) 
-     internal 
-     override
-     onlyRole(UPGRADER_ROLE) {}
+    internal 
+    override
+    onlyRole(UPGRADER_ROLE) {}
 
     function supportsInterface(bytes4 interfaceId)
-     public
-     view
-     override(AccessControlUpgradeable, ERC165StorageUpgradeable)
-     returns (bool) {
+    public
+    view
+    override(AccessControlUpgradeable, ERC165StorageUpgradeable)
+    returns (bool) {
         
         return super.supportsInterface(interfaceId);
     }
