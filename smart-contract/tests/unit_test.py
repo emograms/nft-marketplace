@@ -26,7 +26,8 @@ def test_deploy():
     Deployment steps with assertion of contract roles
     '''
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
 
     def assert_contract_roles(contract, role_list, account):
         '''
@@ -120,7 +121,8 @@ def test_fixed_buy_cancel():
     token_id_2 = 2
     # Try canceling fix price 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     tx_sell = marketplace.addEmogramToMarket(token_id_2, emograms, sell_price, {'from': accounts[0]})
@@ -184,7 +186,8 @@ def test_fixed_buy():
     
     # Try buying own emogram
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
@@ -231,7 +234,8 @@ def test_auction_cancel():
     duration = 5
     start_price = 1e18
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
@@ -280,7 +284,8 @@ def test_auction_buy_finish():
     bid_price_2 = 1.2e18
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.createEmogram({'from': accounts[0]})
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
@@ -404,7 +409,8 @@ def test_initial_auction():
     bid_price_2 = 1.2e18
 
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
     
     initial_auction_prices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     for i in range(0, 33-len(initial_auction_prices)):
@@ -432,6 +438,7 @@ def test_initial_auction():
             assert tx['onAuction'] == True
             assert tx['tokenId'] == initial_order[i]
             assert tx['startPrice'] == price
+            print(tx)
         
         # Bid for only every 3
         if i%3==0:
@@ -471,7 +478,8 @@ def test_founder_vault_royalties():
     # Deploying contracts
     vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-    marketplace = EmogramMarketplace.deploy(True, {'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
 
     # Setting approvals
     emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
@@ -545,7 +553,6 @@ def test_proxy_upgrade():
     '''
     Deploying a proxy scheme and upgrading with a modified contract version
     '''
-
     emograms = EmogramsCollectible.deploy({'from': accounts[0]})
     marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
     marketplace_encoded_init_function = encode_function_data(True)
