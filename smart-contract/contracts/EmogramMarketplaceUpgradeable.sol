@@ -396,7 +396,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
      {
         require(initialAuction.cycle <= 33, "Max cycles already reached");
 
-        if(emogramsOnAuction.length == initialAuction.cycle * 3) {
+        if(emogramsOnAuction.length == initialAuction.cycle * 3 && initialAuction.cycle != 0) {
             for(uint i = 0; i < 3; i++) {
                 if(emogramsOnAuction[i].highestBidder == msg.sender) {
                     endAuctionWithNoBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
