@@ -46,7 +46,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
     onlyRole(WITHDRAWER_ROLE)
     public {
 
-        require(totalContents == payable address(this).balance, "Balance inconsistent!");
+        require(totalContents == payable(address(this)).balance, "Balance inconsistent!");
         require(totalContents != 0, "Vault empty!");
 
         for(uint i = 0; i < Founders.length; i++) {
@@ -54,6 +54,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
 
             (bool sent, bytes memory data) = Founders[i].call{value: toPay}("");
             require(sent, "Failed to withdraw");
+
         }
 
         emit Withdrawal(msg.sender, totalContents);
@@ -95,7 +96,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
     public
     returns (bool) {
 
-        return (totalContents == payable address(this).balance);
+        return (totalContents == payable(address(this)).balance);
     }
 
     function supportsInterface(bytes4 interfaceId)
