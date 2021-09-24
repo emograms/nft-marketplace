@@ -469,10 +469,9 @@ def test_initial_auction():
 
     print('last check')
     for idx, i in enumerate(range(0,99)):
-        for i in range(0,100):
-            tx = marketplace.emogramsOnAuction(i)
-            print(idx, i, tx)
-            assert tx['onAuction'] == False
+        tx = marketplace.emogramsOnAuction(i)
+        print(idx, i, tx)
+        assert tx['onAuction'] == False
 
 def test_founder_vault_royalties():
     '''
