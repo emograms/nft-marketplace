@@ -10,7 +10,7 @@ import random
 import json
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmQsnoBbhrvxDJuwFG32CjEWNDQJTgEtgQ24BcUTTTFhzX'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmPAPuuiuoqX4gQTbk1jMDHgRe8LML5Bd1beUrM3RDswVq/{id}/'
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 
 # WALLETS
@@ -21,24 +21,26 @@ PRIVATE_KEY_GOERLI_ADR = '5ffe2515807d0ace67c342183c6aa506f25553d7fa0e93ceeb4d9b
 PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'    #'0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
 
 # Deployed contracts if there are such
-# EMOGRAMMARKETPLACEUPGRADEABLE = '0x300c6828eEFAefb3C31269eD0463D86E6B4B0eC5'
-# EMOGRAMSCOLLECTIBLE = '0x39FF6aA0791cD8E85C64594e08f4deC9Bbd7783A'
-# FOUNDERVAULT = '0x712446f24c4511F391b590Eb885BB9dAC5C58944'
-# PROXY = ''
+EMOGRAMMARKETPLACEUPGRADEABLE = '0x300c6828eEFAefb3C31269eD0463D86E6B4B0eC5'
+EMOGRAMSCOLLECTIBLE = '0x39FF6aA0791cD8E85C64594e08f4deC9Bbd7783A'
+FOUNDERVAULT = '0x712446f24c4511F391b590Eb885BB9dAC5C58944'
+PROXY = ''
 
 # Loading DEPLOYMENT_JSON_PATH for contract loading 
 def loadJSON():
     if os.path.isfile(DEPLOYMENT_JSON_PATH):
         with open(DEPLOYMENT_JSON_PATH) as json_file:
             deploymen_json = json.load(json_file)
-        EMOGRAMMARKETPLACEUPGRADEABLE_JSON = deploymen_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE']
-        EMOGRAMSCOLLECTIBLE_JSON = deploymen_json[network.show_active()]['EMOGRAMSCOLLECTIBLE']
-        FOUNDERVAULT_JSON = deploymen_json[network.show_active()]['FOUNDERVAULT']
-        PROXY_JSON = deploymen_json[network.show_active()]['PROXY']
-
-        return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON
+        if network.show_active() in deploymen_json.keys():
+            EMOGRAMMARKETPLACEUPGRADEABLE_JSON = deploymen_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE']
+            EMOGRAMSCOLLECTIBLE_JSON = deploymen_json[network.show_active()]['EMOGRAMSCOLLECTIBLE']
+            FOUNDERVAULT_JSON = deploymen_json[network.show_active()]['FOUNDERVAULT']
+            PROXY_JSON = deploymen_json[network.show_active()]['PROXY']
+            return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON
+        else:
+            return '0x0', '0x0', '0x0', '0x0'
     else:
-        return 0, 0, 0, 0
+        return '0x0', '0x0', '0x0', '0x0'
 
 # Loading
 DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
@@ -67,15 +69,20 @@ print("Active Network: ")
 print(network.show_active() + "\n")
 
 # Setting gas prices for interactions
-if network.show_active() == 'mainnet':
+if network.show_active() == 'development':
+    gas_input = input("Please define a gas fee you would like to use (gwei):")
+    gas_input = brownie.web3.toWei(int(gas_input), "gwei")
+    gas_price(gas_input)
 
+
+# mainnet, goerli, kovan, ropsten, etc. anything
+else:
     print("Which gas price strategy would you like to use?")
     fee_type_input = input("GasNow or EIP1559: ")
 
     if fee_type_input == 'EIP1559':
         eip1559_fee_input = input("Set a priority fee (gwei):")
-        priority_fee(brownie.web3.toWei(int(eip1559_fee_input), "gwei"))
-        gas_input = priority_fee()
+        gas_input = priority_fee(brownie.web3.toWei(int(eip1559_fee_input), "gwei"))
 
     elif fee_type_input == 'GasNow':
         slow = int(brownie.web3.fromWei(GasNowStrategy("slow").get_gas_price(), "gwei"))
@@ -91,11 +98,6 @@ if network.show_active() == 'mainnet':
         gas_input = GasNowStrategy(gas_input)
         gas_price(gas_input)
         gas_input = gas_input.get_gas_price()
-        
-else: # development, göerli, etc.
-    gas_input = input("Please define a gas fee you would like to use (gwei):")
-    gas_input = brownie.web3.toWei(int(gas_input), "gwei")
-    gas_price(gas_input)
 
 # Displaying new prices
 gas_price_gwei = brownie.web3.fromWei(gas_input, "gwei")
@@ -169,21 +171,31 @@ def deploy_network(withProxy=True, testMode=False, publishSource=True):
     # Set marketplace URI
     emograms.setURI(IPFS_URI, {'from': DEPLOYER, 'gas_price': gas_input})
 
+
+
+
+
     # Saving deployment json
+
+    #### TODOOOOOOOOOOOO
+
+    ## HERE IT SHOULD LOAD IN EXISTING JSON AND REWRITE IT NOT CREATE NEW
+
+    #############+
+
+
+
+
+
     deployed_contracts_json = {}
-    if 'mainnet' not in deployed_contracts_json: deployed_contracts_json['mainnet'] = {} 
-    if 'goerli' not in deployed_contracts_json: deployed_contracts_json['goerli'] = {}
-    if 'rinkeby' not in deployed_contracts_json: deployed_contracts_json['rinkeby'] = {}
-    if 'kovan' not in deployed_contracts_json: deployed_contracts_json['kovan'] = {}
-    if 'ropsten' not in deployed_contracts_json: deployed_contracts_json['ropsten'] = {}
-    if 'development' not in deployed_contracts_json: deployed_contracts_json['development'] = {}
+    if network.show_active() not in deployed_contracts_json: deployed_contracts_json[network.show_active()] = {} 
     deployed_contracts_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE'] = marketplace.address
     deployed_contracts_json[network.show_active()]['EMOGRAMSCOLLECTIBLE'] = emograms.address
     deployed_contracts_json[network.show_active()]['FOUNDERVAULT'] = vault.address
     try: 
         deployed_contracts_json[network.show_active()]['PROXY'] = proxy.address
     except:
-        deployed_contracts_json[network.show_active()]['PROXY'] = ''
+        deployed_contracts_json[network.show_active()]['PROXY'] = '0x0'
 
     with open(DEPLOYMENT_JSON_PATH, 'w') as outfile:
         json.dump(deployed_contracts_json, outfile, indent=4, sort_keys=True)
