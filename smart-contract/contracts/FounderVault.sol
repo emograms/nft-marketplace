@@ -46,7 +46,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
     onlyRole(WITHDRAWER_ROLE)
     public {
 
-        require(totalContents == address(this).balance, "Balance inconsistent!");
+        require(totalContents == payable address(this).balance, "Balance inconsistent!");
         require(totalContents != 0, "Vault empty!");
 
         for(uint i = 0; i < Founders.length; i++) {
