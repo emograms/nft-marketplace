@@ -439,6 +439,10 @@ def test_initial_auction():
             assert tx['tokenId'] == initial_order[i]
             assert tx['startPrice'] == price
             print(tx)
+            if idx>0:
+                tx = marketplace.emogramsOnAuction(i-3)
+                assert tx['onAuction'] == False
+                print(tx)
         
         # Bid for only every 3
         if i%3==0:
@@ -578,6 +582,7 @@ def test_proxy_upgrade():
 
 '''
 Todo:
+- stepAuction more thorough checks for auction array
 - vault eth distribution asserts
 - set originality
 - token distribution SRT
