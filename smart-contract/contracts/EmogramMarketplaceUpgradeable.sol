@@ -394,7 +394,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     payable
     external
      {
-        require(initialAuction.cycle <= 33, "Max cycles already reached");
+        require(initialAuction.cycle <= 34, "Max cycles already reached");
 
         if(emogramsOnAuction.length == initialAuction.cycle * 3 && initialAuction.cycle != 0) {
 
@@ -416,7 +416,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
         initialAuction.cycle = initialAuction.cycle + 1;
 
-        if(initialAuction.cycle >= 33) {
+        if(initialAuction.cycle >= 34) {
             initialAuction.isInitialAuction = false;
             emit InitialAuctionFinished();
         }
