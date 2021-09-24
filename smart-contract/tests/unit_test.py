@@ -460,22 +460,19 @@ def test_initial_auction():
                 assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
                 assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 0
 
+    print('current cycle: ', str(marketplace.initialAuction()))
+    # Close last cycle
+    step_auction = marketplace.stepAuctions(emograms, price, auction_time)
+
     # Check if initialAuction period ended and all auctions are closed
     assert 'InitialAuctionFinished' in step_auction.events
 
-    # Close last 3
-    step_auction = marketplace.stepAuctions(emograms, price, auction_time)
-
     print('last check')
-    for idx, i in enumerate(range(0,100)):
+    for idx, i in enumerate(range(0,99)):
         for i in range(0,100):
             tx = marketplace.emogramsOnAuction(i)
             print(idx, i, tx)
             assert tx['onAuction'] == False
-
-    # Try if it allows more steps
-    #try:
-    #    step_auction = marketplace.stepAuctions(emograms, 0.1e18, auction_time)
 
 def test_founder_vault_royalties():
     '''

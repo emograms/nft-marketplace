@@ -409,7 +409,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
             }
         }
 
-        if(initialAuction.cycle < 34) {
+        if(initialAuction.cycle < 33) {
             for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
 
                 createAuction(initialEmogramsorder[i], _tokenAddress, _duration, _startPrice);
