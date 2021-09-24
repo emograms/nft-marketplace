@@ -524,7 +524,7 @@ def test_founder_vault_royalties():
     # Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
     founders_pct = [50, 5, 22.5, 22.5]
-    founders_pct = [x*10000 for x in founders_pct]
+    founders_pct = [x*100 for x in founders_pct]
 
     # Deploying contracts
     vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
@@ -579,72 +579,48 @@ def test_founder_vault_royalties():
     assert int(assert_vault_balance)/1 == vault.balance()/1
 
 def test_vault_distribution():
-# Setting addresses
-CSONGOR = accounts[9]
-PATR = accounts[8]
-ADR = accounts[7]
-MIKI = accounts[6]
+    '''
+    Test founder vault withdraw mechanism and assert balances
+    '''
 
-# Miki, Csongor, Patr, Adr
-founders = [MIKI, CSONGOR, PATR, ADR]
-founders_pct = [50, 5, 22.5, 22.5]
-founders_pct = [x*10000 for x in founders_pct]
+    # Amount to work with
+    total_withdraw_amount = 1e18
 
-# Deploying contracts
-vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
-emograms = EmogramsCollectible.deploy({'from': accounts[0]})
-marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
-marketplace.initialize(True, {'from': accounts[0]})
+    # Setting addresses
+    CSONGOR = accounts[9]
+    PATR = accounts[8]
+    ADR = accounts[7]
+    MIKI = accounts[6]
+    
+    CSONGOR_balance = accounts[9].balance()
+    PATR_balance = accounts[8].balance()
+    ADR_balance = accounts[7].balance()
+    MIKI_balance = accounts[6].balance()
 
-# Get some funds to distribute
-accounts[0].transfer(vault, 1e18)
+    # Miki, Csongor, Patr, Adr
+    founders = [MIKI, CSONGOR, PATR, ADR]
+    founders_pct = [50, 5, 22.5, 22.5]
+    founders_pct = [x*100 for x in founders_pct]
 
+    # Deploying contracts
+    vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
+    vault_balance = vault.balance()
 
-# Setting approvals
-emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
-emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+    # Get some funds to distribute
+    accounts[0].transfer(vault, total_withdraw_amount)
+    assert vault.balance() == vault_balance + total_withdraw_amount
 
-# Setting beneficiaries
-emograms.setBeneficiary(vault)
-
-# Minting emograms
-token_id_auction = 2
-token_id_auction_nobid = 3
-token_id_fixed = 4
-token_id_fixed_nobuy = 5
-sell_price = 1e18
-bid_price = sell_price*1.1
-auction_time = 2
-royalty_pct = 0.075
-
-emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
-
-# Selling on auction bid/nobid
-tx_auction_bid = marketplace.createAuction(token_id_auction, emograms, auction_time, sell_price, {'from': accounts[0]})
-tx_auction_nobid = marketplace.createAuction(token_id_auction_nobid, emograms, auction_time, sell_price, {'from': accounts[0]})
-auction_id = tx_auction_bid.return_value
-auction_id_nobid = tx_auction_nobid.return_value
-
-# Placing bid
-tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
-auction_item = marketplace.emogramsOnAuction(auction_id)
-auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
-
-# Finishing auctions
-time.sleep(auction_time+1)
-tx_finish_bid = marketplace.finishAuction(emograms, token_id_auction, auction_id, {'from': accounts[0]})
-tx_finish_nobid = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
-
-# Selling on fixed price, buying and no buying
-tx_fixed = marketplace.addEmogramToMarket(token_id_fixed, emograms, sell_price, {'from': accounts[0]})
-tx_fixed_nobuy = marketplace.addEmogramToMarket(token_id_fixed_nobuy, emograms, sell_price, {'from': accounts[0]})
-sell_item = tx_fixed.return_value
-sell_item_nobuy = tx_fixed_nobuy.return_value
-tx_buy = marketplace.buyEmogram(sell_item, {'from': accounts[1], 'amount': sell_price})
-
-
-
-
+    # Withdraw and assert
+    vault.withdraw()
+    # SafeMath.div(SafeMath.mul(totalContents, Percentages[Founders[i]]), 10000);
+    assert MIKI.balance() == MIKI_balance + total_withdraw_amount*founders_pct[0]/10000
+    assert CSONGOR.balance() == CSONGOR_balance + total_withdraw_amount*founders_pct[1]/10000
+    assert PATR.balance() == PATR_balance + total_withdraw_amount*founders_pct[2]/10000
+    assert ADR.balance() == ADR_balance + total_withdraw_amount*founders_pct[3]/10000
+    assert vault.balance() == vault_balance + total_withdraw_amount - total_withdraw_amount
 
 def test_proxy_deploy():
     '''
@@ -697,6 +673,5 @@ def test_proxy_upgrade():
 
 '''
 Todo:
-- vault eth distribution asserts
 - set originality
 '''
