@@ -1,0 +1,16 @@
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.3.2
+  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2
+compiler:
+  solc:
+    remappings:
+      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.2'
+      - '@openzeppelinUpgrades=OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2'
+autofetch_sources: True
+dev_deployment_artifacts: True
+# networks:
+#     development:
+#         cmd_settings:
+#             unlock:
+#                 - 0xB39C856b19b619D67c3bBC64cf9A6FcAe96227a1
+#                 - 0xe4A8c1E93F5E674C9901F15C69F7DF2187f6aD27
