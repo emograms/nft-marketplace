@@ -95,7 +95,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
     public
     returns (bool) {
 
-        return (totalContents == address(this).balance);
+        return (totalContents == payable address(this).balance);
     }
 
     function supportsInterface(bytes4 interfaceId)
