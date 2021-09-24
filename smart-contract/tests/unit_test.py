@@ -432,17 +432,18 @@ def test_initial_auction():
         print('Auction cycle #%s' %(idx))
         step_auction = marketplace.stepAuctions(emograms, price, auction_time)
         for i in range(3*idx,3*idx+3):
-            print('Emogram id #%s' %(i))
+            emogram_id = initial_order[i]
+            print('Emogram id #%s' %(emogram_id))
             # Do checks
             tx = marketplace.emogramsOnAuction(i)
-            assert tx['onAuction'] == True
-            assert tx['tokenId'] == initial_order[i]
-            assert tx['startPrice'] == price
             print(tx)
+            assert tx['onAuction'] == True
+            assert tx['tokenId'] == emogram_id
+            assert tx['startPrice'] == price
             if idx>0:
                 tx = marketplace.emogramsOnAuction(i-3)
                 assert tx['onAuction'] == False
-        
+
         # Bid for only every 3
         if i%3==0:
             marketplace.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[2], 'value': bid_price_1})
@@ -461,8 +462,12 @@ def test_initial_auction():
 
     # Check if initialAuction period ended and all auctions are closed
     assert 'InitialAuctionFinished' in step_auction.events
+
+    # Close last 3
+    step_auction = marketplace.stepAuctions(emograms, price, auction_time)
+
     print('last check')
-    for idx, i in enumerate(initial_order):
+    for idx, i in enumerate(range(0,100)):
         tx = marketplace.emogramsOnAuction(i)
         print(idx, i, tx)
         assert tx['onAuction'] == False
