@@ -461,9 +461,10 @@ def test_initial_auction():
 
     # Check if initialAuction period ended and all auctions are closed
     assert 'InitialAuctionFinished' in step_auction.events
-    for i in initial_order:
+    print('last check')
+    for idx, i in enumerate(initial_order):
         tx = marketplace.emogramsOnAuction(i)
-        print(i, tx)
+        print(idx, i, tx)
         assert tx['onAuction'] == False
 
     # Try if it allows more steps
