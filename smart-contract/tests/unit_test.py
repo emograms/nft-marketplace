@@ -431,7 +431,6 @@ def test_initial_auction():
     for idx, price in enumerate(initial_auction_prices):        
         print('Auction cycle #%s' %(idx))
         step_auction = marketplace.stepAuctions(emograms, price, auction_time)
-        time.sleep(1)
         for i in range(3*idx,3*idx+3):
             emogram_id = initial_order[i]
             print('Emogram id #%s' %(emogram_id))
