@@ -473,6 +473,43 @@ def test_initial_auction():
         print(idx, i, tx)
         assert tx['onAuction'] == False
 
+def test_srt_distribution():
+    '''
+    Test SRT distribution after public auction
+    '''
+    auction_duration = 2
+
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
+        
+    initial_order = [x for x in range(2,101)]
+    assert len(initial_order) == 99
+    marketplace.setInitialorder(initial_order)
+
+    mint_token_ids = list(range(1, 101))
+    mint_amounts = [1 for i in range(99)]
+    mint_amounts.insert(0,110)  # Insert SRT amounts
+    emograms.mintBatch(accounts[0], mint_token_ids, mint_amounts, "")
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+
+    # Iterate over auction period
+    for x in range(0,33):
+        step_auction = marketplace.stepAuctions(emograms, 0.1e18, auction_duration)
+        for i in range(3*x,3*x+3):
+            print('Auction cycle #%s' %(x))
+            tx = marketplace.emogramsOnAuction(i)
+            marketplace.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[1], 'value': 0.2e18})
+    step_auction = marketplace.stepAuctions(emograms, 0.1e18, 1)
+
+    # Distribute after auction period
+    emograms.distributeSRT(accounts[0])
+
+    # Check if distributed amounts are correct
+    assert emograms.balanceOf(accounts[1], 1) == 99
+    
+
 def test_founder_vault_royalties():
     '''
     Deploying founder vault and setting as beneficiary in marketplace contract.
@@ -541,6 +578,74 @@ def test_founder_vault_royalties():
     assert_vault_balance += bid_price * royalty_pct # Auction 
     assert int(assert_vault_balance)/1 == vault.balance()/1
 
+def test_vault_distribution():
+# Setting addresses
+CSONGOR = accounts[9]
+PATR = accounts[8]
+ADR = accounts[7]
+MIKI = accounts[6]
+
+# Miki, Csongor, Patr, Adr
+founders = [MIKI, CSONGOR, PATR, ADR]
+founders_pct = [50, 5, 22.5, 22.5]
+founders_pct = [x*10000 for x in founders_pct]
+
+# Deploying contracts
+vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
+emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+marketplace.initialize(True, {'from': accounts[0]})
+
+# Get some funds to distribute
+accounts[0].transfer(vault, 1e18)
+
+
+# Setting approvals
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+
+# Setting beneficiaries
+emograms.setBeneficiary(vault)
+
+# Minting emograms
+token_id_auction = 2
+token_id_auction_nobid = 3
+token_id_fixed = 4
+token_id_fixed_nobuy = 5
+sell_price = 1e18
+bid_price = sell_price*1.1
+auction_time = 2
+royalty_pct = 0.075
+
+emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
+
+# Selling on auction bid/nobid
+tx_auction_bid = marketplace.createAuction(token_id_auction, emograms, auction_time, sell_price, {'from': accounts[0]})
+tx_auction_nobid = marketplace.createAuction(token_id_auction_nobid, emograms, auction_time, sell_price, {'from': accounts[0]})
+auction_id = tx_auction_bid.return_value
+auction_id_nobid = tx_auction_nobid.return_value
+
+# Placing bid
+tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
+auction_item = marketplace.emogramsOnAuction(auction_id)
+auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
+
+# Finishing auctions
+time.sleep(auction_time+1)
+tx_finish_bid = marketplace.finishAuction(emograms, token_id_auction, auction_id, {'from': accounts[0]})
+tx_finish_nobid = marketplace.finishAuction(emograms, 3, 1, {'from': accounts[0]})
+
+# Selling on fixed price, buying and no buying
+tx_fixed = marketplace.addEmogramToMarket(token_id_fixed, emograms, sell_price, {'from': accounts[0]})
+tx_fixed_nobuy = marketplace.addEmogramToMarket(token_id_fixed_nobuy, emograms, sell_price, {'from': accounts[0]})
+sell_item = tx_fixed.return_value
+sell_item_nobuy = tx_fixed_nobuy.return_value
+tx_buy = marketplace.buyEmogram(sell_item, {'from': accounts[1], 'amount': sell_price})
+
+
+
+
+
 def test_proxy_deploy():
     '''
     Deploying contracts with proxy scheme and testing interactions
@@ -592,8 +697,6 @@ def test_proxy_upgrade():
 
 '''
 Todo:
-- stepAuction more thorough checks for auction array
 - vault eth distribution asserts
 - set originality
-- token distribution SRT
 '''
