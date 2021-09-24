@@ -462,19 +462,16 @@ def test_initial_auction():
 
     # Check if initialAuction period ended and all auctions are closed
     assert 'InitialAuctionFinished' in step_auction.events
-<<<<<<< Updated upstream
 
     # Close last 3
     step_auction = marketplace.stepAuctions(emograms, price, auction_time)
 
     print('last check')
     for idx, i in enumerate(range(0,100)):
-=======
-    for i in range(0,100):
->>>>>>> Stashed changes
-        tx = marketplace.emogramsOnAuction(i)
-        print(idx, i, tx)
-        assert tx['onAuction'] == False
+        for i in range(0,100):
+            tx = marketplace.emogramsOnAuction(i)
+            print(idx, i, tx)
+            assert tx['onAuction'] == False
 
     # Try if it allows more steps
     #try:
