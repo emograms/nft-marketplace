@@ -237,8 +237,20 @@ contract EmogramsCollectible is ERC1155, AccessControl, ERC1155Burnable, ERC165S
         super.setApprovalForAll(_operator, _approved);
     } 
 
-    // TODO
-    // function burn(address account, uint256 id, uint256 amount) {}
+    
+    function burn(address _account, uint256 _id, uint256 _amount) 
+     onlyRole(MINTER_ROLE)
+     public
+     override(ERC1155Burnable) {
+         super.burn(_account, _id, _amount);
+    }
+
+    function burnBatch(address _account, uint256[] memory _ids, uint256[] memory _values) 
+     onlyRole(MINTER_ROLE)
+     public
+     override(ERC1155Burnable) {
+         super.burnBatch(_account, _ids, _values);
+     }
 
     function redeemSculp(uint256 _tokenId)
     onlyOwner(_tokenId, msg.sender)
