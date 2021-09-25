@@ -1,17 +1,17 @@
-import os
+import eth_utils, random, json, requests, time, os
+clear = lambda: os.system('clear')
 import time
 import brownie
 from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, FounderVault, ERC1967Proxy, accounts, network
 from brownie.network.gas.strategies import GasNowStrategy
 from brownie.network import gas_price, priority_fee
 from brownie import Contract
-import eth_utils
-import random
-import json
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmPAPuuiuoqX4gQTbk1jMDHgRe8LML5Bd1beUrM3RDswVq/{id}/'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmboyrChGcD6BoThBXqCRDNxp56HFJJ7i6LNqnyrtKi8Ea/{id}/'
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
+os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
+
 
 # WALLETS
 PRIVATE_KEY_GOERLI_MIKI = '3a8bb854c7a86d950c0d3e0b5b1bbcd3912389a95fa530e46c911fe1de099808'        #'0xFe594E862c3ce76E192997EABFC41Afd7C975b52'
@@ -21,10 +21,10 @@ PRIVATE_KEY_GOERLI_ADR = '5ffe2515807d0ace67c342183c6aa506f25553d7fa0e93ceeb4d9b
 PRIVATE_KEY_GOERLI_DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'    #'0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
 
 # Deployed contracts if there are such
-EMOGRAMMARKETPLACEUPGRADEABLE = '0x300c6828eEFAefb3C31269eD0463D86E6B4B0eC5'
-EMOGRAMSCOLLECTIBLE = '0x39FF6aA0791cD8E85C64594e08f4deC9Bbd7783A'
-FOUNDERVAULT = '0x712446f24c4511F391b590Eb885BB9dAC5C58944'
-PROXY = ''
+EMOGRAMMARKETPLACEUPGRADEABLE = '0x0f175A707567bD97688720971ab9Bd33b9937f35'
+EMOGRAMSCOLLECTIBLE = '0x308102a89e78E76C9b623f6E09440345B512d1f5'
+FOUNDERVAULT = '0x4F9C48190041DA5c0514c9C29ec230d0c20aa8d0'
+PROXY = '0x0'
 
 # Loading DEPLOYMENT_JSON_PATH for contract loading 
 def loadJSON():
@@ -36,11 +36,10 @@ def loadJSON():
             EMOGRAMSCOLLECTIBLE_JSON = deploymen_json[network.show_active()]['EMOGRAMSCOLLECTIBLE']
             FOUNDERVAULT_JSON = deploymen_json[network.show_active()]['FOUNDERVAULT']
             PROXY_JSON = deploymen_json[network.show_active()]['PROXY']
+
             return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON
         else:
-            return '0x0', '0x0', '0x0', '0x0'
-    else:
-        return '0x0', '0x0', '0x0', '0x0'
+            return None, None, None, None
 
 def loadJSONRaw():
     if os.path.isfile(DEPLOYMENT_JSON_PATH):
@@ -48,9 +47,11 @@ def loadJSONRaw():
             deploymen_json = json.load(json_file)
         return deploymen_json
 
-# Loading
+# Loading deploymend and IPFS JSONs
 DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
 EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
+IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
+ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2,101)]
 
 # Init deployer address
 accounts.add(PRIVATE_KEY_GOERLI_MIKI)
@@ -65,59 +66,58 @@ PATR = accounts[2]
 ADR = accounts[3]
 DEPLOYER = accounts[4]
 
-os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
-
-# Setting intial auction duration and initial order
-INITIAL_AUCTION_DURATION = 90
-
 print('\n----- Deployment script loaded -----')
 print("Active Network: ")
 print(network.show_active() + "\n")
 
-# Setting gas prices for interactions
-if network.show_active() == 'development':
-    gas_input = input("Please define a gas fee you would like to use (gwei):")
-    gas_input = brownie.web3.toWei(int(gas_input), "gwei")
-    gas_price(gas_input)
-    tx_params = {'from': DEPLOYER, 'gas_price': gas_input}
+def set_gas():
+    '''
+    Must be called to set required gas price from interactive mode
+    '''
+    global tx_params
+    # Setting gas prices for interactions
+    if network.show_active() == 'development':
+        gas_input = input("Please define a gas fee you would like to use (gwei):")
+        gas_input = brownie.web3.toWei(int(gas_input), "gwei")
+        gas_price(gas_input)
+        tx_params = {'from': DEPLOYER, 'gas_price': gas_input}
 
-# mainnet, goerli, kovan, ropsten, etc. anything
-else:
-    if network.show_active() == 'mainnet':
-        print("Which gas price strategy would you like to use?")
-        fee_type_input = input("GasNow or EIP1559: ")
+    # mainnet, goerli, kovan, ropsten, etc. anything
+    else:
+        if network.show_active() == 'mainnet':
+            print("Which gas price strategy would you like to use?")
+            fee_type_input = input("GasNow or EIP1559: ")
 
-        if fee_type_input == 'EIP1559':
-            eip1559_fee_input = input("Set a priority fee (gwei):")
+            if fee_type_input == 'EIP1559':
+                eip1559_fee_input = input("Set a priority fee (gwei):")
+                gas_input = priority_fee(brownie.web3.toWei(int(eip1559_fee_input), "gwei"))
+                tx_params = {'from': DEPLOYER, 'priority_fee': gas_input}
+
+            elif fee_type_input == 'GasNow':
+                slow = int(brownie.web3.fromWei(GasNowStrategy("slow").get_gas_price(), "gwei"))
+                standard = int(brownie.web3.fromWei(GasNowStrategy("standard").get_gas_price(), "gwei"))
+                fast = int(brownie.web3.fromWei(GasNowStrategy("fast").get_gas_price(), "gwei"))
+                rapid = int(brownie.web3.fromWei(GasNowStrategy("rapid").get_gas_price(), "gwei"))
+                print("Mainnet Gas Prices: \n")
+                print("Slow: ", str(slow) + " gwei")
+                print("Standard: ", str(standard) + " gwei")
+                print("Fast: ", str(fast) + " gwei")
+                print("Rapid: ", str(rapid) + " gwei \n")
+                gas_input = input("Which gas speed would you like to use? (slow/standard/fast/rapid): ")
+                gas_input = GasNowStrategy(gas_input)
+                gas_price(gas_input)
+                gas_input = gas_input.get_gas_price()
+                tx_params = {'from': DEPLOYER, 'gas_price': gas_input}
+
+
+        else: # any testnet
+            eip1559_fee_input = input("Please set an EIP1559 priority fee (gwei):")
             gas_input = priority_fee(brownie.web3.toWei(int(eip1559_fee_input), "gwei"))
             tx_params = {'from': DEPLOYER, 'priority_fee': gas_input}
 
-        elif fee_type_input == 'GasNow':
-            slow = int(brownie.web3.fromWei(GasNowStrategy("slow").get_gas_price(), "gwei"))
-            standard = int(brownie.web3.fromWei(GasNowStrategy("standard").get_gas_price(), "gwei"))
-            fast = int(brownie.web3.fromWei(GasNowStrategy("fast").get_gas_price(), "gwei"))
-            rapid = int(brownie.web3.fromWei(GasNowStrategy("rapid").get_gas_price(), "gwei"))
-            print("Mainnet Gas Prices: \n")
-            print("Slow: ", str(slow) + " gwei")
-            print("Standard: ", str(standard) + " gwei")
-            print("Fast: ", str(fast) + " gwei")
-            print("Rapid: ", str(rapid) + " gwei \n")
-            gas_input = input("Which gas speed would you like to use? (slow/standard/fast/rapid): ")
-            gas_input = GasNowStrategy(gas_input)
-            gas_price(gas_input)
-            gas_input = gas_input.get_gas_price()
-            tx_params = {'from': DEPLOYER, 'gas_price': gas_input}
-
-
-    else: # any testnet
-        eip1559_fee_input = input("Please set an EIP1559 priority fee (gwei):")
-        gas_input = priority_fee(brownie.web3.toWei(int(eip1559_fee_input), "gwei"))
-        tx_params = {'from': DEPLOYER, 'priority_fee': gas_input}
-
-# Displaying new prices
-gas_price_gwei = brownie.web3.fromWei(gas_input, "gwei")
-print('Gas prices set at: ', str(gas_price_gwei), ' gwei')
-
+    # Displaying new prices
+    gas_price_gwei = brownie.web3.fromWei(gas_input, "gwei")
+    print('Gas prices set at: ', str(gas_price_gwei), ' gwei')
 
 
 def encode_function_data(initializer=None, *args):
@@ -136,41 +136,27 @@ def encode_function_data(initializer=None, *args):
     else:
         return initializer.encode_input(*args)
     
-def load_deployed_contracts(withProxy=True, fromJSON=True):
-    if fromJSON:
-        EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
-        emograms = Contract(EMOGRAMSCOLLECTIBLE_JSON)
-        marketplace = Contract(EMOGRAMMARKETPLACEUPGRADEABLE_JSON)
-        vault = Contract(FOUNDERVAULT_JSON)
-
-        if withProxy:
-            marketplace = Contract(PROXY_JSON)
-    else:
-        emograms = Contract(EMOGRAMSCOLLECTIBLE)
-        marketplace = Contract(EMOGRAMMARKETPLACEUPGRADEABLE)
-        vault = Contract(FOUNDERVAULT)
-
-        if withProxy:
-            marketplace = Contract(PROXY)
+def load_deployed_contracts():
+    EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
+    emograms = Contract(EMOGRAMSCOLLECTIBLE_JSON)
+    marketplace = Contract(EMOGRAMMARKETPLACEUPGRADEABLE_JSON)
+    vault = Contract(FOUNDERVAULT_JSON)
+    proxy = Contract(PROXY_JSON)
         
-    return emograms, marketplace, vault
+    return emograms, marketplace, vault, proxy
     
-def deploy_network(withProxy=True, testMode=False, publishSource=True, saveJSON=True):
+def deploy_network(testMode=False, publishSource=True, saveJSON=True):
 
     # Deploying contracts
     emograms = EmogramsCollectible.deploy(tx_params, publish_source=publishSource)
     
-    if withProxy:
-        marketplace_contract = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
-        marketplace_encoded_init_function = encode_function_data(True)
-        proxy = ERC1967Proxy.deploy(marketplace_contract, marketplace_encoded_init_function, tx_params, publish_source=publishSource)
-        marketplace = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
-        marketplace.initialize(testMode, tx_params)
-    else:
-        marketplace = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
-        marketplace.initialize(testMode, tx_params)
+    marketplace_contract = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
+    marketplace_encoded_init_function = encode_function_data(True)
+    proxy = ERC1967Proxy.deploy(marketplace_contract, marketplace_encoded_init_function, tx_params, publish_source=publishSource)
+    marketplace_proxy = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
+    marketplace_proxy.initialize(testMode, tx_params)
 
-    # Miki, Csongor, Patr, Adr
+    # Founder Vault deployment Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
     founders_pct = [50, 5, 22.5, 22.5]
     founders_pct = [x*10000 for x in founders_pct]
@@ -180,36 +166,38 @@ def deploy_network(withProxy=True, testMode=False, publishSource=True, saveJSON=
 
     # Set beneficiary on EmogramsCollectible
     emograms.setBeneficiary(vault)
+
     # Set initial auction order
     initial_auction_order = [x for x in range(2,101)]
     random.shuffle(initial_auction_order)
     assert len(initial_auction_order) == 99
-    marketplace.setInitialorder(initial_auction_order, tx_params)
+    marketplace_proxy.setInitialorder(initial_auction_order, tx_params)
+
     # Set marketplace URI
     emograms.setURI(IPFS_URI, tx_params)
 
     # Set Approve for DEPLOYER
-    emograms.setApprovalForAll(marketplace, True, tx_params)
+    emograms.setApprovalForAll(marketplace_proxy, True, tx_params)
 
     # Creating JSON with deployment addresses
     if saveJSON:
         try: 
             deployed_contracts_json = loadJSONRaw()
+            print('Deployment JSON loaded from %s for overwriting: \n' %(DEPLOYMENT_JSON_PATH), deployed_contracts_json)
         except:
+            print('Cannot load existing %s, creating new...' %(DEPLOYMENT_JSON_PATH))
             deployed_contracts_json = {}
-        if network.show_active() not in deployed_contracts_json: deployed_contracts_json[network.show_active()] = {} 
-        deployed_contracts_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE'] = marketplace.address
+        if network.show_active() not in deployed_contracts_json: 
+            deployed_contracts_json[network.show_active()] = {} 
+        deployed_contracts_json[network.show_active()]['EMOGRAMMARKETPLACEUPGRADEABLE'] = marketplace_contract.address
         deployed_contracts_json[network.show_active()]['EMOGRAMSCOLLECTIBLE'] = emograms.address
         deployed_contracts_json[network.show_active()]['FOUNDERVAULT'] = vault.address
-        try: 
-            deployed_contracts_json[network.show_active()]['PROXY'] = proxy.address
-        except:
-            deployed_contracts_json[network.show_active()]['PROXY'] = '0x0'
+        deployed_contracts_json[network.show_active()]['PROXY'] = marketplace_proxy.address
 
         with open(DEPLOYMENT_JSON_PATH, 'w') as outfile:
             json.dump(deployed_contracts_json, outfile, indent=4, sort_keys=True)
 
-    return emograms, marketplace, vault
+    return emograms, marketplace_proxy, vault, marketplace_contract
 
 def mint_tokens(emograms, marketplace):
     # Minting Emogram NFT tokens and SRTs
@@ -225,14 +213,8 @@ def mint_tokens(emograms, marketplace):
             y = y + emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER})
     print("Total emograms minted: ", y)
 
-# def approve_addresses(emograms, marketplace):
-    # Approve addreses
-    
-    # emograms.setApprovalForAll(marketplace, True, {'from': MIKI, 'gas_price': gas_input})
-    # emograms.setApprovalForAll(marketplace, True, {'from': CSONGOR, 'gas_price': gas_input})
-    # emograms.setApprovalForAll(marketplace, True, {'from': PATR, 'gas_price': gas_input})
-    # emograms.setApprovalForAll(marketplace, True, {'from': ADR, 'gas_price': gas_input})
-    # emograms.setApprovalForAll(marketplace, True, tx_params)
+def set_origin_hash(emograms):
+    emograms.setOrigHash(ORIGIN_HASHES, tx_params)
 
 def distribute_few_tokens(emograms):
 
@@ -247,17 +229,16 @@ def distribute_ether(to, amount=2e18):
 
     DEPLOYER.transfer(to, amount, tx_params)
 
-def run_initialAuction_cycles(emograms, marketplace, duration=INITIAL_AUCTION_DURATION):
+def run_initialAuction_cycles(emograms, marketplace, duration):
 
     # Auction variables
-    initial_auction_prices = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
-    for i in range(0, 33-len(initial_auction_prices)):
-        initial_auction_prices.append(0.1)
-    assert len(initial_auction_prices) == 33
+    initial_auction_prices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    for i in range(0, 33-len(initial_auction_prices)+1):
+        initial_auction_prices.append(1)
+    assert len(initial_auction_prices) == 34
     initial_auction_prices_e18 = []
     for i in initial_auction_prices:
         initial_auction_prices_e18.append(i*1e18)
-
 
     # Get current cycle and remove cycle times element from INITIAL_AUCTION_PRICES
     auction_cycle = marketplace.initialAuction()['cycle']
