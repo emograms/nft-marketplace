@@ -764,3 +764,111 @@ def test_no_bid_token_transfer_from_vault():
     assert emograms.ownerOf(token_id_auction_nobid, vault) == True
     emograms.safeTransferFrom(vault, accounts[0], token_id_auction_nobid, 1, '', {'from': vault})
     assert emograms.ownerOf(token_id_auction_nobid, accounts[0]) == True
+
+def test_full_workflow():
+    """ Steps: 
+                0. set addresses, constants
+                1. deploy emogramsCollectible, marketplace, proxy, vault
+                2. Mint emograms, SRT
+                3: set initialOrder
+                4. set origHash
+                5. start stepauction from vault until finished
+                6. bid randomly to auctions
+                7. check balances, emogram owners, etc
+                8. withdraw from wallet, trasnfer remaining emograms
+    """
+
+    # Setting addresses
+    CSONGOR = accounts[9]
+    PATR = accounts[8]
+    ADR = accounts[7]
+    MIKI = accounts[6]
+
+    # Miki, Csongor, Patr, Adr
+    founders = [MIKI, CSONGOR, PATR, ADR]
+    founders_pct = [50, 5, 22.5, 22.5]
+    founders_pct = [x*100 for x in founders_pct]
+
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace_encoded_init_function = encode_function_data(True)
+    proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]})
+    proxy_abi = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
+    proxy_abi.initialize(True, {'from': accounts[0]})
+    vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
+
+    emograms.setApprovalForAll(proxy_abi, True, {'from': vault})
+    emograms.setApprovalForAll(proxy_abi, True, {'from': accounts[0]})
+    emograms.setApprovalForAll(proxy_abi, True, {'from': accounts[1]})
+
+    # Setting beneficiaries
+    emograms.setBeneficiary(vault)
+
+    # Minting emograms
+    token_id_auction = 2
+    token_id_auction_nobid = 3
+    token_id_fixed = 4
+    token_id_fixed_nobuy = 5
+    sell_price = 1e18
+    bid_price = sell_price*1.1
+    auction_time = 2
+    royalty_pct = 0.075
+
+    emograms.mintBatch(vault, list(range(2, 101)), [1 for i in range(99)], "")
+
+    initial_auction_prices = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    for i in range(0, 33-len(initial_auction_prices)):
+        initial_auction_prices.append(1.0)
+    assert len(initial_auction_prices) == 33
+    
+    initial_order = [x for x in range(2,101)]
+    random.shuffle(initial_order)
+    assert len(initial_order) == 99
+    proxy_abi.setInitialorder(initial_order, {'from': accounts[0]})
+    proxy_abi.addFounder(vault, {'from': accounts[0]})
+
+    for idx, price in enumerate(initial_auction_prices):        
+        print('Auction cycle #%s' %(idx))
+        step_auction = proxy_abi.stepAuctions(emograms, price, auction_time, {'from': vault})
+        for i in range(3*idx,3*idx+3):
+            emogram_id = initial_order[i]
+            print('Emogram id #%s' %(emogram_id))
+            # Do checks
+            tx = proxy_abi.emogramsOnAuction(i)
+            print(tx)
+            assert tx['onAuction'] == True
+            assert tx['tokenId'] == emogram_id
+            assert tx['startPrice'] == price
+            if idx>0:
+                tx = proxy_abi.emogramsOnAuction(i-3)
+                assert tx['onAuction'] == False
+
+        # Bid for only every 3
+        if i%3==0:
+            proxy_abi.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[2], 'value': bid_price_1})
+            proxy_abi.PlaceBid(i, tx['tokenId'], emograms, {'from': accounts[3], 'value': bid_price_2})
+
+        # Check if every third is owned by accounts[3] and the rest is owned by accounts[0]
+        if idx > 0:
+            if i%3==0:
+                assert emograms.balanceOf(accounts[0], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 1
+            else:
+                assert emograms.balanceOf(accounts[0], initial_order[idx], {'from': accounts[0]}) == 1
+                assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
+                assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 0
+
+    print('current cycle: ', str(proxy_abi.initialAuction()))
+    # Close last cycle
+    step_auction = proxy_abi.stepAuctions(emograms, price, auction_time, {'from': vault})
+
+    # Check if initialAuction period ended and all auctions are closed
+    assert 'InitialAuctionFinished' in step_auction.events
+
+    print('last check')
+    for idx, i in enumerate(range(0,99)):
+        tx = proxy_abi.emogramsOnAuction(i)
+        print(idx, i, tx)
+        assert tx['onAuction'] == False
+
