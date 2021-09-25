@@ -32,7 +32,6 @@ emograms, marketplace_contract, vault, marketplace = deployment.load_deployed_co
 print('EmogramsCollectibe: ', emograms)
 print('EmogramMarketplaceUpgradeable: ', marketplace)
 print('FounderVault: ', vault)
-print('Current auction cycle: ', total_auction_counter)
 
 def call_function():
     total_auction_counter = marketplace.initialAuction()['cycle']
