@@ -678,7 +678,7 @@ Todo:
 - set originality
 '''
 
-def originality_test():
+def test_originality_test():
     hashes_str = []
     uuids_obj = []
     uuids_str = []
@@ -699,5 +699,5 @@ def originality_test():
         emograms.originalityHash(x)
         hashes_str[x]
         hashlib.sha256(uuids_str[x].encode()).hexdigest()
-        returned_value = emograms.verifyOrig(bytes(uuids_str[x], 'UTF-8'), 2).return_value
+        returned_value = emograms.verifyOrig(bytes(uuids_str[x], 'UTF-8'), x+2).return_value
         assert returned_value == True
