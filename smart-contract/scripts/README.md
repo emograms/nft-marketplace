@@ -2,7 +2,7 @@
 
 The basic workflow for using the deployment script with Brownie:
 
- 1. Open a in **repo/smart-contracts**`brownie console --network <goerli/mainnet>`
+ 1. Open a in **repo/smart-contracts**`brownie console --network=<goerli/mainnet>`
  2. Import deployment script using `import scripts.deployment as d`
  3. It will load required wallets and you can set gas fees with `d.set_gas()`, which will ask for a gwei amount to be used with the deployment
  4. To deploy new contract instances use `emograms, proxy_marketplace, vault, marketplace = d.deploy_network(testMode=False, publishSource=True, saveJSON=True)`
