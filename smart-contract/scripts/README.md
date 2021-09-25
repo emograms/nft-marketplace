@@ -15,3 +15,14 @@ The basic workflow for using the deployment script with Brownie:
 
  - `emograms, marketplace, vault, proxy = d.load_deployed_contracts()` to load contracts instances from **repo/latest_deployment.json**
  - `d.distribute_ether(to, amount)` to manually send some ETH from the `DEPLOYER account`
+
+### Itearte over an initial auction from script
+After deploying the contracts and minting tokens using the previous methods use this simple loop to iterate over the initial auction 33 day cycle.
+```
+>>> from time import sleep
+>>>  AUCTION_PERIOD_SEC = 55
+>>> for i in range(34):
+...     d.run_initialAuction_cycles(emograms, marketplace, AUCTION_PERIOD_SEC)
+...     sleep(AUCTION_PERIOD_SEC + 5)
+```
+
