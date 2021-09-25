@@ -6,12 +6,13 @@ from os import listdir
 from os.path import isfile, join
 
 def merge_JsonFiles():
-    result = list()
-    for x in range(1,100):
+    result = {}
+    for x in range(1,101):
         fileToOpen = "/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/JSONs_ID/" + str(x)
         with open(fileToOpen, 'r') as infile:
-            with open('JSONs_ID/0', 'a') as output_file:
-                output_file.write(str(json.load(infile)) + "\n")
+            result[x] = json.load(infile)
+    with open('JSONs_ID/0', 'w') as output_file:
+        json.dump(result, output_file)
 
 hashes_str = []
 uuids_obj = []
