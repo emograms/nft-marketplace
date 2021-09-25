@@ -3,6 +3,8 @@ import random
 from os import initgroups
 import eth_utils
 from brownie import *
+import uuid, hashlib
+from hexbytes import HexBytes
 
 def encode_function_data(initializer=None, *args):
     """Encodes the function call so we can work with an initializer.
@@ -675,3 +677,27 @@ def test_proxy_upgrade():
 Todo:
 - set originality
 '''
+
+def originality_test():
+    hashes_str = []
+    uuids_obj = []
+    uuids_str = []
+
+    for x in range(0,101):
+        uuids_obj.append(uuid.uuid4())
+        uuid_string = str(uuids_obj[x]).replace('-', '')
+        uuids_str.append(uuid_string)
+        hashes_str.append(hashlib.sha256(uuids_str[x].encode()).hexdigest())
+
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
+
+    emograms.setOrigHash(hashes_str)
+
+    for x in range(0, 100):
+        emograms.originalityHash(x)
+        hashes_str[x]
+        hashlib.sha256(uuids_str[x].encode()).hexdigest()
+        returned_value = emograms.verifyOrig(bytes(uuids_str[x], 'UTF-8'), 2).return_value
+        assert returned_value == True
