@@ -673,11 +673,6 @@ def test_proxy_upgrade():
     assert newfunction == 'Upgraded'
     assert sale_data == proxy_abi_v2.emogramsOnSale(0)
 
-'''
-Todo:
-- set originality
-'''
-
 def test_originality_test():
     hashes_str = []
     uuids_obj = []
@@ -701,3 +696,71 @@ def test_originality_test():
         hashlib.sha256(uuids_str[x].encode()).hexdigest()
         returned_value = emograms.verifyOrig(bytes(uuids_str[x], 'UTF-8'), x+2).return_value
         assert returned_value == True
+
+'''
+Todo:
+- test erc1155 trasnfer from foundervault after closed auction with no bid
+'''
+
+def test_no_bid_token_transfer_from_vault():
+    '''
+    Deploying founder vault and setting as beneficiary in marketplace contract.
+    Making a sell auction and fixed price transaction and checking royalties in founder vault
+    '''
+    # Setting addresses
+    CSONGOR = accounts[9]
+    PATR = accounts[8]
+    ADR = accounts[7]
+    MIKI = accounts[6]
+
+    # Miki, Csongor, Patr, Adr
+    founders = [MIKI, CSONGOR, PATR, ADR]
+    founders_pct = [50, 5, 22.5, 22.5]
+    founders_pct = [x*100 for x in founders_pct]
+
+    # Deploying contracts
+    vault = FounderVault.deploy(founders, founders_pct, {'from': accounts[0]})
+    emograms = EmogramsCollectible.deploy({'from': accounts[0]})
+    marketplace = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
+    marketplace.initialize(True, {'from': accounts[0]})
+
+    # Setting approvals
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[0]})
+    emograms.setApprovalForAll(marketplace, True, {'from': accounts[1]})
+    emograms.setApprovalForAll(marketplace, True, {'from': vault})
+
+    # Setting beneficiaries
+    emograms.setBeneficiary(vault)
+
+    # Minting emograms
+    token_id_auction = 2
+    token_id_auction_nobid = 3
+    token_id_fixed = 4
+    token_id_fixed_nobuy = 5
+    sell_price = 1e18
+    bid_price = sell_price*1.1
+    auction_time = 2
+    royalty_pct = 0.075
+
+    emograms.mintBatch(accounts[0], list(range(2, 101)), [1 for i in range(99)], "")
+    emograms.safeTransferFrom(accounts[0], vault, token_id_auction_nobid, 1, '')
+
+    # Selling on auction bid/nobid
+    tx_auction_bid = marketplace.createAuction(token_id_auction, emograms, auction_time, sell_price, {'from': accounts[0]})
+    tx_auction_nobid = marketplace.createAuction(token_id_auction_nobid, emograms, auction_time, sell_price, {'from': vault})
+    auction_id = tx_auction_bid.return_value
+    auction_id_nobid = tx_auction_nobid.return_value
+
+    # Placing bid
+    tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
+    auction_item = marketplace.emogramsOnAuction(auction_id)
+    auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
+
+    # Finishing auctions
+    time.sleep(auction_time+1)
+    tx_finish_bid = marketplace.finishAuction(emograms, token_id_auction, auction_id, {'from': accounts[0]})
+    tx_finish_nobid = marketplace.finishAuction(emograms, token_id_auction_nobid, auction_id_nobid, {'from': vault})
+
+    assert emograms.ownerOf(token_id_auction_nobid, vault) == True
+    emograms.safeTransferFrom(vault, accounts[0], token_id_auction_nobid, 1, '', {'from': vault})
+    assert emograms.ownerOf(token_id_auction_nobid, accounts[0]) == True
