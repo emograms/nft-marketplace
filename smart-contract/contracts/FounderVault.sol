@@ -42,6 +42,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
     }
 
     function withdraw()
+    nonReentrant()
     public {
 
         require(totalContents == payable(address(this)).balance, "Balance inconsistent!");
@@ -80,7 +81,7 @@ contract FounderVault is AccessControl, ReentrancyGuard, ERC1155Holder {
         emit NewBatchFounders(msg.sender);
     }
 
-    function addFounder(address payable  _newFounder) 
+    function addNewFounder(address payable  _newFounder) 
     public 
     onlyRole(DEFAULT_ADMIN_ROLE) {
 
