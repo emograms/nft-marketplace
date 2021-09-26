@@ -26,8 +26,12 @@ After deploying the contracts and minting tokens using the previous methods use 
 ...     d.run_initialAuction_cycles(emograms, marketplace, AUCTION_PERIOD_SEC)
 ...     sleep(AUCTION_PERIOD_SEC + 5)
 ```
-### Full deployment code
+### Full deployment code - ONLY FOR GOERLI
 
+**IMPORTANT NOTE:**
+If you want to deploy to `mainnet` use `testMode=True` for `d.deploy_network(...)` step.
+
+**Example code:**
 ```
 brownie console --network=goerli
 
@@ -52,7 +56,7 @@ Use set_gas() before interacting!
 >>> d.set_gas()
 Please set an EIP1559 priority fee (gwei):150
 Gas prices set at:  150  gwei
->>> emograms, marketplace, vault, _ = d.deploy_network(True, True, True)
+>>> emograms, proxy_marketplace, vault, marketplace = d.deploy_network(testMode=True, publishSource=True, saveJSON=True)
 Transaction sent: 0xd791fcb886402019796e9770ad67672ff255960ac92cd008d22467a00c9e57e0
   Max fee: 150.000000014 gwei   Priority fee: 150.0 gwei   Gas limit: 6022372   Nonce: 654
   EmogramsCollectible.constructor confirmed   Block: 5561620   Gas used: 5474884 (90.91%)   Gas price: 150.000000007 gwei
@@ -112,7 +116,7 @@ Transaction sent: 0x47559db5b42b1e3498f04fc3828dfedd39cbdfd1ec603485e609be16255d
 
 Deployment JSON loaded from latest_deployment.json for overwriting: 
  {'goerli': {'EMOGRAMMARKETPLACEUPGRADEABLE': '0x6D5C620251B8AA21E6C25bC52e3157AdA664f47C', 'EMOGRAMSCOLLECTIBLE': '0x598cc2DECc906B6177371AED42272D94B8876562', 'FOUNDERVAULT': '0x65fd7D4b28a341AeCE65181Ee6F5Dd9734f12131', 'PROXY': '0x12a2C84B85FC5b01df9A2999aBA2159cbB41fC14'}}
->>> d.mint_tokens(emograms, marketplace)
+>>> d.mint_tokens(emograms, proxy_marketplace)
 Transaction sent: 0xf5ead5a5b02b2baba58505d2fb797ec02c3151c77efcc306b7de56eaa02cea85
   Max fee: 150.000000014 gwei   Priority fee: 150.0 gwei   Gas limit: 2643880   Nonce: 663
   EmogramsCollectible.mintBatch confirmed   Block: 5561671   Gas used: 2403528 (90.91%)   Gas price: 150.000000007 gwei
@@ -127,7 +131,7 @@ Transaction sent: 0x2a17310634d399f1504a3503dcffa00702f5086e5455c690fd47f2128aaa
 >>> from time import sleep
 >>>  AUCTION_PERIOD_SEC = 55
 >>> for i in range(34):
-...     d.run_initialAuction_cycles(emograms, marketplace, AUCTION_PERIOD_SEC)
+...     d.run_initialAuction_cycles(emograms, proxy_marketplace, AUCTION_PERIOD_SEC)
 ...     sleep(AUCTION_PERIOD_SEC + 5)
 Auction cycle #1  Start price:  1e+17
 Transaction sent: 0xeacd64694eeff962d8d07d975f0dd75207faa426522cdbf1bb9ac1b5e2cc3035
