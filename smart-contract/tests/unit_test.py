@@ -784,6 +784,8 @@ def test_full_workflow():
     ADR = accounts[7]
     MIKI = accounts[6]
 
+    bid_price_1 = 1.1e18
+    bid_price_2 = 1.2e18
     # Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
     founders_pct = [50, 5, 22.5, 22.5]
@@ -826,6 +828,8 @@ def test_full_workflow():
     assert len(initial_order) == 99
     proxy_abi.setInitialorder(initial_order, {'from': accounts[0]})
     proxy_abi.addFounder(vault, {'from': accounts[0]})
+    accounts[0].transfer(vault, 1e18)
+    assert vault.balance() != 0
 
     for idx, price in enumerate(initial_auction_prices):        
         print('Auction cycle #%s' %(idx))
@@ -871,4 +875,12 @@ def test_full_workflow():
         tx = proxy_abi.emogramsOnAuction(i)
         print(idx, i, tx)
         assert tx['onAuction'] == False
+
+    assert proxy.balance() == 0
+    assert vault.balance() != 0
+    print(vault.balance())
+    print(proxy.balance())
+    vault.withdraw({'from': accounts[0]})
+
+    assert vault.balance() != 0
 
