@@ -14,7 +14,7 @@ import deployment
 MAINNET = False
 ## MAIN SWITCH
 
-AUCTION_DURATION = 60*60*24*3 if MAINNET else 5                                                             # <------------ CHANGE FOR MAINNET 60*60*24*3 # 3 days 
+AUCTION_DURATION = 3 if MAINNET else 5                                                                      # <------------ CHANGE FOR MAINNET 3 (days) vs 3 (seconds) 
 GAS_FEE = '70 gwei' if MAINNET else '100 gwei'                                                              # <------------ CHANGE FOR MAINNET 70 gwei
 
 SCHEDULER_PERIOD_SEC = 60*60*24*3 if MAINNET else 30
@@ -42,7 +42,7 @@ def call_function():
         print('------- Auction #%s -------' %(total_auction_counter))
         print('Ran at local:', ctime(time()))
         print('NYC time: ', nyc)
-        deployment.run_initialAuction_cycles(emograms, marketplace, AUCTION_DURATION)
+        deployment.run_initialAuction_cycles(emograms, marketplace, vault, AUCTION_DURATION)
     else:
         print('Auction finisheed, no more stepAuction calls.')
         recurring_scheduler.job_summary()

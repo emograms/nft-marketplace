@@ -171,7 +171,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
          }
     }
 
-
     // Add new founders
     function addFounder(address _newFounder)
     public

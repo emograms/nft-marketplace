@@ -8,14 +8,14 @@ from brownie.network import gas_price, priority_fee
 from brownie import Contract
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmboyrChGcD6BoThBXqCRDNxp56HFJJ7i6LNqnyrtKi8Ea/{id}/'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmSAtZ3h6uq6F6ihodKVWg27K1WmYXRhit2No88ckk31J3/{id}/'
 IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2,101)]
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
 
 # WALLETS
-DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'    #'0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
+DEPLOYER =  'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'      #'0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
 # GOERLI ADDRESS
 PRIVATE_KEY_GOERLI_MIKI =       '0xFe594E862c3ce76E192997EABFC41Afd7C975b52'        # '3a8bb854c7a86d950c0d3e0b5b1bbcd3912389a95fa530e46c911fe1de099808'
 PRIVATE_KEY_GOERLI_CSONGOR =    '0x76cA42252508c0AD52bf7936dC3eabb82cF9872e'        # '7890e57df5d235ca4a5065341467d18276293f7066bf96e7e9a88c6f89737c67'
@@ -147,6 +147,9 @@ def encode_function_data(initializer=None, *args):
         return eth_utils.to_bytes(hexstr="0x")
     else:
         return initializer.encode_input(*args)
+
+def distribute_ether_from_deployer(to, amount='1 ether'):
+    DEPLOYER.transfer(to, amount, tx_params)
     
 def load_deployed_contracts():
     EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
@@ -173,6 +176,8 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
     founders_pct = [50, 5, 22.5, 22.5]
     founders_pct = [x*10000 for x in founders_pct]
     vault = FounderVault.deploy(founders, founders_pct, tx_params, publish_source=publishSource)
+    # Add founder role to vault and send some Ether
+    marketplace_proxy.addFounder(vault, tx_params)
 
     print("Contracts deployed on:", network.show_active())
 
@@ -188,7 +193,7 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
     # Set marketplace URI
     emograms.setURI(IPFS_URI, tx_params)
 
-    # Set Approve for DEPLOYER
+    # Set Approve for DEPLOYER and VAULT
     emograms.setApprovalForAll(marketplace_proxy, True, tx_params)
 
     # Creating JSON with deployment addresses
@@ -211,35 +216,24 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
 
     return emograms, marketplace_proxy, vault, marketplace_contract
 
-def mint_tokens(emograms, marketplace):
+
+def mint_tokens(emograms):
     # Minting Emogram NFT tokens and SRTs
     mint_token_ids = list(range(1, 101))
     mint_amounts = [1 for i in range(99)]
     mint_amounts.insert(0,110)  # Insert SRT amounts
     emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", tx_params)
 
+
     # Checking total of Emogram tokens number
     y = 0
     for x in range(1, 101):
-        if(emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER}) != 0):
-            y = y + emograms.balanceOf(DEPLOYER, x, {'from': DEPLOYER})
+        if(emograms.balanceOf(vault, x, {'from': DEPLOYER}) != 0):
+            y = y + emograms.balanceOf(vault, x, {'from': DEPLOYER})
     print("Total emograms minted: ", y)
 
 def set_origin_hash(emograms):
     emograms.setOrigHash(ORIGIN_HASHES, tx_params)
-
-def distribute_few_tokens(emograms):
-
-    print('Distributing tokens to MIKI, CSONGOR, PATR, ADR...')
-    # Emogram Tokens and SRTs
-    emograms.safeBatchTransferFrom(DEPLOYER, MIKI, [1,2,3], [1,1,1],'', tx_params)
-    emograms.safeBatchTransferFrom(DEPLOYER, CSONGOR, [1,4,5], [1,1,1],'', tx_params)
-    emograms.safeBatchTransferFrom(DEPLOYER, PATR, [1,6,7], [1,1,1],'', tx_params)
-    emograms.safeBatchTransferFrom(DEPLOYER, ADR, [1,8,9], [1,1,1],'', tx_params)
-
-def distribute_ether(to, amount=2e18):
-
-    DEPLOYER.transfer(to, amount, tx_params)
 
 def run_initialAuction_cycles(emograms, marketplace, duration):
 
