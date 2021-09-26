@@ -1,0 +1,34 @@
+tests/unit_test.py ..................                                     [100%]
+================================== Gas Profile ==================================
+
+
+ERC1967Proxy <Contract>
+   └─ constructor        -  avg:  243529  avg (confirmed):  243529  low:  243521  high:  243533
+EmogramMarketplaceUpgradeable <Contract>
+   ├─ constructor        -  avg: 4819594  avg (confirmed): 4819594  low: 4819594  high: 4819594
+   ├─ setInitialorder    -  avg: 2050074  avg (confirmed): 2050074  low: 2050074  high: 2050074
+   ├─ stepAuctions       -  avg:  613409  avg (confirmed):  613409  low:  137078  high:  749623
+   ├─ createAuction      -  avg:  255119  avg (confirmed):  255119  low:  253319  high:  257519
+   ├─ initialize         -  avg:  208047  avg (confirmed):  208047  low:  208047  high:  208047
+   ├─ addEmogramToMarket -  avg:  162222  avg (confirmed):  162222  low:  160122  high:  164322
+   ├─ buyEmogram         -  avg:   96116  avg (confirmed):  126580  low:   35189  high:  137041
+   ├─ finishAuction      -  avg:   75129  avg (confirmed):   83658  low:   23949  high:  110629
+   ├─ PlaceBid           -  avg:   52620  avg (confirmed):   52620  low:   52540  high:   61790
+   ├─ cancelAuction      -  avg:   38078  avg (confirmed):   47395  low:   28762  high:   47395
+   └─ cancelSell         -  avg:   36141  avg (confirmed):   36141  low:   36141  high:   36141
+EmogramMarketplaceUpgradeable_UpgradeTest <Contract>
+   └─ constructor        -  avg: 4650378  avg (confirmed): 4650378  low: 4650378  high: 4650378
+EmogramsCollectible <Contract>
+   ├─ constructor        -  avg: 5333784  avg (confirmed): 5333784  low: 5333784  high: 5333784
+   ├─ mintBatch          -  avg: 2262145  avg (confirmed): 2262145  low: 2250382  high: 2286754
+   ├─ setOrigHash        -  avg: 2123415  avg (confirmed): 2123415  low: 2123415  high: 2123415
+   ├─ distributeSRT      -  avg: 1114806  avg (confirmed): 1114806  low: 1114806  high: 1114806
+   ├─ createEmogram      -  avg:   81907  avg (confirmed):   81907  low:   81907  high:   81907
+   ├─ createFunToken     -  avg:   71829  avg (confirmed):   71829  low:   71829  high:   71829
+   ├─ safeTransferFrom   -  avg:   50148  avg (confirmed):   50148  low:   45567  high:   63893
+   ├─ setApprovalForAll  -  avg:   48418  avg (confirmed):   48418  low:   48095  high:   49793
+   ├─ setBeneficiary     -  avg:   29928  avg (confirmed):   29928  low:   29920  high:   29932
+   └─ verifyOrig         -  avg:   25234  avg (confirmed):   25234  low:   25234  high:   25234
+FounderVault <Contract>
+   ├─ constructor        -  avg: 1447777  avg (confirmed): 1447777  low: 1447777  high: 1447777
+   └─ withdraw           -  avg:   84243  avg (confirmed):   84243  low:   84243  high:   84243
