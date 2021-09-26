@@ -10,7 +10,7 @@ The basic workflow for using the deployment script with Brownie:
  5. From now on you can use the returned `brownie.Contract` objects with further deployment functions or simply interact in brownie
  6. To mint the token use `d.mint_tokens(emograms, vault)` - this will create 1 of each `tokenId` and 110 of the SRT token (`tokenId=1)` to the address of the deployer
  7. In order to set originality hashes use `d.set_origin_hash(emograms)`
- 8. To start the initial auction cycle and call `stepAuction()` function of the marketplace contract use `drun_initialAuction_cycles(emograms, marketplace, vault,  duration)` using duration as seconds if `testMode=True` and days if `testMode=True` during `d.deploy_network()`
+ 8. To start the initial auction cycle and call `stepAuction()` function of the marketplace contract use `d.run_initialAuction_cycles(emograms, marketplace, vault,  duration)` using duration as seconds if `testMode=True` and days if `testMode=True` during `d.deploy_network()`
 
 ### Other handful functionalities for console interaction
 
