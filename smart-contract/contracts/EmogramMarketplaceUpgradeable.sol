@@ -177,7 +177,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     public
     onlyRole(DEFAULT_ADMIN_ROLE) {
 
-            grantRole(FOUNDER_ROLE, msg.sender);
+            grantRole(FOUNDER_ROLE, _newFounder);
         }
 
     function emogramsOnSaleLength()
