@@ -855,7 +855,7 @@ def test_full_workflow():
                 assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
                 assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 1
             else:
-                assert emograms.balanceOf(accounts[0], initial_order[idx], {'from': accounts[0]}) == 1
+                assert emograms.balanceOf(vault, initial_order[idx], {'from': accounts[0]}) == 1
                 assert emograms.balanceOf(accounts[2], initial_order[idx], {'from': accounts[0]}) == 0
                 assert emograms.balanceOf(accounts[3], initial_order[idx], {'from': accounts[0]}) == 0
 
