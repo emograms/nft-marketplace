@@ -1,4 +1,5 @@
 
+
 # deployment.py
 
 The basic workflow for using the deployment script with Brownie:
@@ -7,20 +8,20 @@ The basic workflow for using the deployment script with Brownie:
  2. Import deployment script using `import scripts.deployment as d`
  3. It will load required wallets and you can set gas fees with `d.set_gas()`, which will ask for a gwei amount to be used with the deployment
  4. To deploy new contract instances use `emograms, proxy_marketplace, vault, marketplace = d.deploy_network(testMode=False, publishSource=True, saveJSON=True)`
- 5. From now on you can use the returned `brownie.Contract` objects with further deployment functions or simply interact in brownie
- 6. To mint the token use `d.mint_tokens(emograms, vault)` - this will create 1 of each `tokenId` and 110 of the SRT token (`tokenId=1)` to the address of the deployer
- 7. In order to set originality hashes use `d.set_origin_hash(emograms)`
- 8. To start the initial auction cycle and call `stepAuction()` function of the marketplace contract use `d.run_initialAuction_cycles(emograms, marketplace, vault,  duration)` using duration as seconds if `testMode=True` and days if `testMode=True` during `d.deploy_network()`
+ 6. If Etherscan verification fails try again with eg.: `EmogramMarketplaceUpgradeable.publish_source(marketplace, silent=False)`
+ 7. To mint the token use `d.mint_tokens(emograms)` - this will create 1 of each `tokenId` and 110 of the SRT token (`tokenId=1)` to the address of the deployer
+ 8. In order to set originality hashes use `d.set_origin_hash(emograms)`
+ 9. To start the initial auction cycle and call `stepAuction()` function of the marketplace contract use `d.run_initialAuction_cycles(emograms, marketplace, duration)` using duration as seconds if `testMode=True` and days if `testMode=True` during `d.deploy_network()`
 
 ### Other handful functionalities for console interaction
 
  - `emograms, marketplace, vault, proxy = d.load_deployed_contracts()` to load contracts instances from **repo/latest_deployment.json**
- - `d.distribute_ether(to, amount)` to manually send some ETH from the `DEPLOYER account`
+ - `distribute_ether_from_deployer(to, amount)` to manually send some ETH from the `DEPLOYER account`
 
 ### Itearte over an initial auction from script
 After deploying the contracts and minting tokens using the previous methods use this simple loop to iterate over the initial auction 33 day cycle.
 ```
->>> from time import sleep
+>>> from time import sleepa
 >>>  AUCTION_PERIOD_SEC = 55
 >>> for i in range(34):
 ...     d.run_initialAuction_cycles(emograms, marketplace, AUCTION_PERIOD_SEC)
@@ -31,7 +32,7 @@ After deploying the contracts and minting tokens using the previous methods use 
 **IMPORTANT NOTE:**
 If you want to deploy to `mainnet` use `testMode=True` for `d.deploy_network(...)` step.
 
-**Example code:**
+**Example code for GOERLI:**
 ```
 brownie console --network=goerli
 
