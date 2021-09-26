@@ -8,7 +8,7 @@ from brownie.network import gas_price, priority_fee
 from brownie import Contract
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmboyrChGcD6BoThBXqCRDNxp56HFJJ7i6LNqnyrtKi8Ea/{id}/'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmSAtZ3h6uq6F6ihodKVWg27K1WmYXRhit2No88ckk31J3/{id}/'
 IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2,101)]
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
@@ -148,7 +148,7 @@ def encode_function_data(initializer=None, *args):
     else:
         return initializer.encode_input(*args)
 
-def distribute_ether_from_deployer(to, amount):
+def distribute_ether_from_deployer(to, amount='1 ether'):
     DEPLOYER.transfer(to, amount, tx_params)
     
 def load_deployed_contracts():
