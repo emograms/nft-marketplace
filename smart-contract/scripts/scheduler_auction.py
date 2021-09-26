@@ -42,7 +42,7 @@ def call_function():
         print('------- Auction #%s -------' %(total_auction_counter))
         print('Ran at local:', ctime(time()))
         print('NYC time: ', nyc)
-        deployment.run_initialAuction_cycles(emograms, marketplace, AUCTION_DURATION)
+        deployment.run_initialAuction_cycles(emograms, marketplace, vault, AUCTION_DURATION)
     else:
         print('Auction finisheed, no more stepAuction calls.')
         recurring_scheduler.job_summary()
