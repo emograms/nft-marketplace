@@ -149,7 +149,7 @@ def encode_function_data(initializer=None, *args):
         return initializer.encode_input(*args)
 
 def distribute_ether_from_deployer(to, amount='1 ether'):
-    DEPLOYER.transfer(to, amount, tx_params)
+    DEPLOYER.transfer(to, amount)
     
 def load_deployed_contracts():
     EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
@@ -173,10 +173,10 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
 
     # Founder Vault deployment Miki, Csongor, Patr, Adr
     founders = [MIKI, CSONGOR, PATR, ADR]
-    founders_pct = [50, 5, 22.5, 22.5]
+    founders_pct = [0.5, 0.05, 0.225, 0.225]
     founders_pct = [x*10000 for x in founders_pct]
     vault = FounderVault.deploy(founders, founders_pct, tx_params, publish_source=publishSource)
-    # Add founder role to vault and send some Ether
+    # Add founder role to vault
     marketplace_proxy.addFounder(vault, tx_params)
 
     print("Contracts deployed on:", network.show_active())
