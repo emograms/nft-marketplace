@@ -8,6 +8,7 @@ compiler:
       - '@openzeppelinUpgrades=OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2'
 autofetch_sources: True
 dev_deployment_artifacts: True
+dotenv: .env
 # networks:
 #     development:
 #         cmd_settings:
