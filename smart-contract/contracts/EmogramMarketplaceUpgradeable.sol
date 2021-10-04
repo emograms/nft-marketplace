@@ -392,8 +392,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
     isInitialAuctionPeriod()
     onlyRole(FOUNDER_ROLE)
-    payable
-    external
+    public
      {
         require(initialAuction.cycle <= 34, "Max cycles already reached");
 
