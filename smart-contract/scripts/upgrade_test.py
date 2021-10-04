@@ -72,6 +72,7 @@ marketplace_v2 = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]})
 proxy_abi.upgradeTo(marketplace_v2, {'from': accounts[0]})
 proxy_abi_v2 = Contract.from_abi("EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
 
+
 proxy_abi_v2.stepAuctions(emograms, 0.1, 2, {'from': accounts[0]})
 time.sleep(2)
 
