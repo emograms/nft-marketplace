@@ -359,16 +359,14 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     auctionNotEnded(_auctionId)
     nonReentrant()
     payable
-    external
+    public
     returns(uint256)
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "Auction has already finished");
         require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
-        if(emogramsOnAuction[_auctionId].highestBid != emogramsOnAuction[_auctionId].startPrice) {    
-        (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-        require(sent, "Failed to place bid");
+        if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
         emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
         emogramsOnAuction[_auctionId].highestBid = msg.value;
@@ -379,6 +377,10 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
         else {
             require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
+
+            (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
+            require(sent, "Failed to place bid");
+            
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
 
@@ -390,8 +392,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
     isInitialAuctionPeriod()
     onlyRole(FOUNDER_ROLE)
-    payable
-    external
+    public
      {
         require(initialAuction.cycle <= 34, "Max cycles already reached");
 

@@ -754,6 +754,7 @@ def test_no_bid_token_transfer_from_vault():
 
     # Placing bid
     tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
+    tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[2], 'value': bid_price})
     auction_item = marketplace.emogramsOnAuction(auction_id)
     auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
 
@@ -881,7 +882,4 @@ def test_full_workflow():
     assert vault.balance() != 0
     print(vault.balance())
     print(proxy.balance())
-    vault.withdraw({'from': accounts[0]})
-
-    assert vault.balance() != 0
 
