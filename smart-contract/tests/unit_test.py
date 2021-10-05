@@ -667,6 +667,7 @@ def test_proxy_upgrade():
     marketplace_v2 = EmogramMarketplaceUpgradeable_UpgradeTest.deploy({'from': accounts[0]})
     proxy_abi.upgradeTo(marketplace_v2, {'from': accounts[0]})
     proxy_abi_v2 = Contract.from_abi("EmogramMarketplaceUpgradeable_UpgradeTest", proxy.address, EmogramMarketplaceUpgradeable_UpgradeTest.abi)
+    proxy_abi_v2.initialize(True, {'from': accounts[0]})
 
     assert proxy_abi_v2.emogramsOnSaleLength() == 2
     newfunction = proxy_abi_v2.newFunction()
