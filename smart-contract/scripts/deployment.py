@@ -200,7 +200,7 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
     if saveJSON:
         try: 
             deployed_contracts_json = loadJSONRaw()
-            print('Deployment JSON loaded from %s for overwriting: \n' %(DEPLOYMENT_JSON_PATH), deployed_contracts_json)
+            print('Deployed JSON saved: \n', deployed_contracts_json)
         except:
             print('Cannot load existing %s, creating new...' %(DEPLOYMENT_JSON_PATH))
             deployed_contracts_json = {}
@@ -213,23 +213,24 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
 
         with open(DEPLOYMENT_JSON_PATH, 'w') as outfile:
             json.dump(deployed_contracts_json, outfile, indent=4, sort_keys=True)
+            print('Deployed JSON saved: \n', deployed_contracts_json)
 
     return emograms, marketplace_proxy, vault, marketplace_contract
 
 
-def mint_tokens(emograms):
+def mint_tokens(emograms, to_addr):
     # Minting Emogram NFT tokens and SRTs
     mint_token_ids = list(range(1, 101))
     mint_amounts = [1 for i in range(99)]
     mint_amounts.insert(0,110)  # Insert SRT amounts
-    emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", tx_params)
+    emograms.mintBatch(to_addr, mint_token_ids, mint_amounts, "", tx_params)
 
 
     # Checking total of Emogram tokens number
     y = 0
     for x in range(1, 101):
-        if(emograms.balanceOf(vault, x, {'from': DEPLOYER}) != 0):
-            y = y + emograms.balanceOf(vault, x, {'from': DEPLOYER})
+        if(emograms.balanceOf(to_addr, x, {'from': DEPLOYER}) != 0):
+            y = y + emograms.balanceOf(to_addr, x, {'from': DEPLOYER})
     print("Total emograms minted: ", y)
 
 def set_origin_hash(emograms):
