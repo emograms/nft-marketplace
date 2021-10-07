@@ -368,11 +368,11 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
-        emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
-        emogramsOnAuction[_auctionId].highestBid = msg.value;
+            emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
+            emogramsOnAuction[_auctionId].highestBid = msg.value;
 
-        emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
-        return _auctionId;
+            emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
+            return _auctionId;
         }
 
         else {
