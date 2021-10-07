@@ -376,11 +376,17 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         }
 
         else {
+
+            // IF the seller is not the highest bidder, that means someone already made a bid
+            // so we rew. the msg.value to be bigger than the current bid, and not equal or bigger
+
             require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
 
+            //we send the previous highest bid back 
             (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
             require(sent, "Failed to place bid");
-            
+
+            //set the new highest bid and bidder
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
 
