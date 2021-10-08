@@ -311,7 +311,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
-            durationToDays = block.timestamp + _duration; //TODO: actually in secs
+            durationToDays = block.timestamp + _duration;
         }
         else {
             durationToDays = block.timestamp + _duration * 1 days;
@@ -337,7 +337,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
 
-        if(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice) {
+        if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
 
             activeAuctions[_tokenAddress][_tokenId] = false;
             delete emogramsOnAuction[_auctionId];
@@ -366,6 +366,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
+        // since the seller can't bid on their own auction, this if only runs when no previous bid has been placed
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
