@@ -13,5 +13,5 @@ accounts.add(DEPLOYER)
 DEPLOYER = accounts[0]
 
 #DEPLOY
-tx_params = {'from': DEPLOYER, 'gas_price': "standard"}
-marketplace_contract = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
+tx_params = {'from': DEPLOYER, 'gas_price': int(brownie.web3.fromWei(GasNowStrategy("standard").get_gas_price(), "gwei"))}
+marketplace_contract = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=True)
