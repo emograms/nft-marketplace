@@ -667,7 +667,6 @@ def test_proxy_upgrade():
     marketplace_v2 = EmogramMarketplaceUpgradeable_UpgradeTest.deploy({'from': accounts[0]})
     proxy_abi.upgradeTo(marketplace_v2, {'from': accounts[0]})
     proxy_abi_v2 = Contract.from_abi("EmogramMarketplaceUpgradeable_UpgradeTest", proxy.address, EmogramMarketplaceUpgradeable_UpgradeTest.abi)
-    proxy_abi_v2.initialize(True, {'from': accounts[0]})
 
     assert proxy_abi_v2.emogramsOnSaleLength() == 2
     newfunction = proxy_abi_v2.newFunction()
@@ -754,7 +753,11 @@ def test_no_bid_token_transfer_from_vault():
 
     # Placing bid
     tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[1], 'value': bid_price})
-    tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[2], 'value': bid_price})
+    try: 
+        tx_bid = marketplace.PlaceBid(auction_id, token_id_auction, emograms, {'from': accounts[2], 'value': bid_price})
+    except Exception as e:
+        assert 'Bid too low' in e.revert_msg
+
     auction_item = marketplace.emogramsOnAuction(auction_id)
     auction_item_nobid = marketplace.emogramsOnAuction(auction_id_nobid)
 
