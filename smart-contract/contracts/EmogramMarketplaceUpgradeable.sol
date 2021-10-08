@@ -171,6 +171,13 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
          }
     }
 
+    function setInitialAuction(uint256  _newCycle, bool  _newisInitialAuction)
+     public
+     onlyRole(FOUNDER_ROLE) {
+         initialAuction.isInitialAuction = _newisInitialAuction;
+         initialAuction.cycle = _newCycle;
+     }
+
     // Add new founders
     function addFounder(address _newFounder)
     public

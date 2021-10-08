@@ -46,7 +46,7 @@ print("Fast Gas Price: ")
 print(str(gas_strategy.get_gas_price()) + " wei \n")
 
 
-emograms = EmogramsCollectible.deploy({'from': accounts[0]}, publish_source=True)
+""" emograms = EmogramsCollectible.deploy({'from': accounts[0]}, publish_source=True)
 marketplace = EmogramMarketplaceUpgradeable_UpgradeTest.deploy({'from': accounts[0]}, publish_source=True)
 marketplace_encoded_init_function = encode_function_data(True)
 proxy = ERC1967Proxy.deploy(marketplace, marketplace_encoded_init_function, {'from': accounts[0]}, publish_source=True)
@@ -66,7 +66,7 @@ proxy_abi.stepAuctions(emograms, 0.1, 2, {'from': accounts[0]})
 
 time.sleep(2)
 proxy_abi.stepAuctions(emograms, 0.1, 2, {'from': accounts[0]})
-time.sleep(2)
+time.sleep(2) """
 
 marketplace_v2 = EmogramMarketplaceUpgradeable.deploy({'from': accounts[0]}, publish_source=True)
 #proxy_abi.upgradeTo(marketplace_v2, {'from': accounts[0]})
