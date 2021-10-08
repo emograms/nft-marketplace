@@ -311,7 +311,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         uint256 durationToDays;
 
         if(isTestPeriod == true) {
-            durationToDays = block.timestamp + _duration; //TODO: actually in secs
+            durationToDays = block.timestamp + _duration;
         }
         else {
             durationToDays = block.timestamp + _duration * 1 days;
@@ -337,7 +337,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
 
-        if(emogramsOnAuction[_auctionId].highestBid == emogramsOnAuction[_auctionId].startPrice) {
+        if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
 
             activeAuctions[_tokenAddress][_tokenId] = false;
             delete emogramsOnAuction[_auctionId];
@@ -366,21 +366,28 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
+        // since the seller can't bid on their own auction, this if only runs when no previous bid has been placed
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
-        emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
-        emogramsOnAuction[_auctionId].highestBid = msg.value;
+            emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
+            emogramsOnAuction[_auctionId].highestBid = msg.value;
 
-        emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
-        return _auctionId;
+            emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
+            return _auctionId;
         }
 
         else {
+
+            // IF the seller is not the highest bidder, that means someone already made a bid
+            // so we rew. the msg.value to be bigger than the current bid, and not equal or bigger
+
             require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
 
+            //we send the previous highest bid back 
             (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
             require(sent, "Failed to place bid");
-            
+
+            //set the new highest bid and bidder
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
             emogramsOnAuction[_auctionId].highestBid = msg.value;
 
