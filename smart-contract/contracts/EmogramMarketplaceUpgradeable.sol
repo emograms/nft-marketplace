@@ -6,25 +6,24 @@ import "@openzeppelinUpgrades/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelinUpgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelinUpgrades/contracts/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgradeable.sol";
+
+
+//TODO: Add setter/getter func. for defaultIncrement, add increment param in funcs.
 
  contract EmogramMarketplaceUpgradeable is 
  Initializable, UUPSUpgradeable, ERC165StorageUpgradeable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
 
+     using SafeERC20 for IERC20;
+     using SafeMath for uint256;
+
+    IERC20 public weth;
 
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-
-    bytes4 constant ERC2981ID = 0x2a55205a;
-
-    bool isTestPeriod;
-
-    struct initAuction {
-        bool isInitialAuction;
-        uint256 cycle;
-    }
-
-    bool public isInitialAuction = true;
+    
+    uint256 private defaultIncrement = 100000000000000000; //0.1 wETH
 
     // Struct for a fixed price sell
     // sellId - Id of the sale
@@ -63,18 +62,15 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         bool onAuction;
     }
 
-    initAuction public initialAuction;
-
     // All emograms in the marketplace
     sellItem[] public emogramsOnSale;
     auctionItem[] public emogramsOnAuction;
 
-    //The order of the emograms during the initial auction period
-    mapping(uint256 => uint256) private initialEmogramsorder;
-
     // Emograms in the marketplace currently up for sale or auction
     mapping(address => mapping(uint256 => bool)) public activeEmograms;
     mapping(address => mapping(uint256 => bool)) public activeAuctions;
+
+    bool isTestPeriod;
 
     // Events
     event EmogramAdded(uint256 indexed id, uint256 indexed tokenId, address indexed tokenAddress, uint256 askingPrice);
@@ -84,8 +80,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     event AuctionCreated(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress, uint256 startPrice, uint256 duration);
     event AuctionCanceled(uint256 indexed id, uint256 indexed tokenId, address indexed seller, address tokenAddress);
     event AuctionFinished(uint256 indexed id, uint256 indexed tokenId, address indexed highestBidder, address seller, uint256 highestBid);
-    event InitialAuctionSale(uint256 indexed id, uint256 indexed tokenid, address highestBidder, uint256 highestBid);
-    event InitialAuctionFinished();
 
     // Check if the caller is actually the owner
     modifier isTheOwner(address _tokenAddress, uint256 _tokenId, address _owner) {
@@ -100,15 +94,9 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     }
 
     // Check if marketplace has approval to sell/buy on behalf of the caller
-    // TODO: Add royalty check here
     modifier hasTransferApproval (address tokenAddress, uint256 tokenId) {
         IERC1155 tokenContract = IERC1155(tokenAddress);
         require(tokenContract.isApprovedForAll(msg.sender, address(this)) == true, "No Approval");
-        _;
-    }
-
-    modifier isInitialAuctionPeriod() {
-        require(initialAuction.isInitialAuction == true, "The initial auction period has already ended");
         _;
     }
 
@@ -117,7 +105,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         _;
     }
 
-        modifier auctionEnded(uint256 _auctionId) {
+    modifier auctionEnded(uint256 _auctionId) {
         require(emogramsOnAuction[_auctionId].endDate < block.timestamp, "Auction is still ongoing");
         _;
     }
@@ -144,7 +132,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         _;
     }
 
-    function initialize(bool _isTest) initializer public {
+    function initialize(bool _isTest, address _weth) initializer public {
         
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -155,28 +143,9 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         _setupRole(FOUNDER_ROLE, msg.sender);
         _setupRole(UPGRADER_ROLE, msg.sender);
 
-        _registerInterface(ERC2981ID);
         isTestPeriod = _isTest;
-
-        initialAuction.isInitialAuction = true;
-        initialAuction.cycle = 0;
+        weth = IERC20(_weth);
     }
-
-    function setInitialorder(uint256[99] memory _ids) 
-    public
-    onlyRole(FOUNDER_ROLE) {
-         require(_ids.length == 99, "id length mismatch");
-         for(uint256 i = 0; i < _ids.length; i++) {
-             initialEmogramsorder[i] = _ids[i];
-         }
-    }
-
-    function setInitialAuction(uint256  _newCycle, bool  _newisInitialAuction)
-     public
-     onlyRole(FOUNDER_ROLE) {
-         initialAuction.isInitialAuction = _newisInitialAuction;
-         initialAuction.cycle = _newCycle;
-     }
 
     // Add new founders
     function addFounder(address _newFounder)
@@ -207,7 +176,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
           return emogramsOnSale;
       }
 
-     function getAuctionArray()
+    function getAuctionArray()
     public
     view
     returns (auctionItem[] memory) {
@@ -300,9 +269,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         (address receiver, uint256 toSend) = sendRoyalty(id);
 
         //Sending the payment
-        (bool sentSucces, bytes memory dataRec) = emogramsOnSale[id].seller.call{value: toSend}("");
-        require(sentSucces, "Failed to buy");
-
+        weth.safeTransferFrom(weth, emogramsOnSale[id].seller, msg.sender, toSend);
         emit EmogramSold(id, emogramsOnSale[id].tokenId, msg.sender, emogramsOnSale[id].price, emogramsOnSale[id].seller);
     }
 
@@ -353,8 +320,8 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
         else {
 
-            (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-            require(sent, "Failed to cancel");
+            weth.safeTransferFrom(weth, address(this), emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].highestBid);
+
             activeAuctions[_tokenAddress][_tokenId] = false;
             delete emogramsOnAuction[_auctionId];
 
@@ -370,14 +337,15 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     returns(uint256)
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "Auction has already finished");
-        require(emogramsOnAuction[_auctionId].highestBid <= msg.value, "Bid too low");
+        require(emogramsOnAuction[_auctionId].highestBid <= weth.balanceOf(msg.sender), "Not enough wETH to bid");
         require(emogramsOnAuction[_auctionId].seller != msg.sender, "Can't bid on your own auction!");
 
         // since the seller can't bid on their own auction, this if only runs when no previous bid has been placed
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
-            emogramsOnAuction[_auctionId].highestBid = msg.value;
+            uint256 memory amount = emogramsOnAuction[_auctionId].highestBid + defaultIncrement;
+            emogramsOnAuction[_auctionId].highestBid = weth.safeTransferFrom(weth, msg.sender, address(this), amount);
 
             emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
             return _auctionId;
@@ -388,11 +356,10 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
             // IF the seller is not the highest bidder, that means someone already made a bid
             // so we rew. the msg.value to be bigger than the current bid, and not equal or bigger
 
-            require(emogramsOnAuction[_auctionId].highestBid < msg.value, "Bid too low");
+            require(emogramsOnAuction[_auctionId].highestBid <= weth.balanceOf(msg.sender), "Not enough wETH to bid");
 
-            //we send the previous highest bid back 
-            (bool sent, bytes memory data) = emogramsOnAuction[_auctionId].highestBidder.call{value: emogramsOnAuction[_auctionId].highestBid}("");
-            require(sent, "Failed to place bid");
+            //we send the previous highest bid back
+            weth.safeTransferFrom(weth, address(this), emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].highestBid); 
 
             //set the new highest bid and bidder
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
@@ -402,43 +369,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
             return _auctionId;
         }
     }
-
-    function stepAuctions(address _tokenAddress, uint256 _startPrice, uint256 _duration)
-    isInitialAuctionPeriod()
-    onlyRole(FOUNDER_ROLE)
-    public
-     {
-        require(initialAuction.cycle <= 34, "Max cycles already reached");
-
-        if(emogramsOnAuction.length == initialAuction.cycle * 3 && initialAuction.cycle != 0) {
-
-            for(uint i = (initialAuction.cycle * 3) - 1; i >= (initialAuction.cycle * 3) - 3; i--) {
-                if(emogramsOnAuction[i].highestBidder == msg.sender) {
-                    endAuctionWithNoBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
-                }
-                else {
-                    endAuctionWithBid(_tokenAddress, emogramsOnAuction[i].tokenId, emogramsOnAuction[i].auctionId);
-                }
-                if(i == 0) { break; }
-            }
-        }
-
-        if(initialAuction.cycle < 33) {
-            for(uint256 i = (initialAuction.cycle * 3); i < (initialAuction.cycle * 3 + 3); i++) {
-
-                createAuction(initialEmogramsorder[i], _tokenAddress, _duration, _startPrice);
-            }
-        }
-
-
-        initialAuction.cycle = initialAuction.cycle + 1;
-
-        if(initialAuction.cycle >= 34) {
-            initialAuction.isInitialAuction = false;
-            emit InitialAuctionFinished();
-        }
-
-     }
 
     function endAuctionWithBid(address _tokenAddress, uint256 _tokenId, uint256 _auctionId) private {
 
@@ -512,6 +442,4 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         
         return super.supportsInterface(interfaceId);
     }
-    
-    receive() external payable {}
 }
