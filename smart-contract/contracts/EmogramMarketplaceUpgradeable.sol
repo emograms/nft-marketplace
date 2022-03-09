@@ -23,8 +23,6 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     bytes32 public constant FOUNDER_ROLE = keccak256("FOUNDER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     
-    uint256 private defaultIncrement = 100000000000000000; //0.1 wETH
-
     // Struct for a fixed price sell
     // sellId - Id of the sale
     // tokenAddress - the address of the token contract
@@ -196,11 +194,11 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         uint256 toSend = SafeMath.sub(emogramsOnSale[_id].price,royAmount);
 
         //Sending the royalty
-        (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
-        require(sent, "Failed to send royalty");
-
-        return (emogramsOnSale[_id].seller, toSend);
-
+        //Seller might need changing to this contracts' address, right now,
+        //we receive payment before successful sale and NFT transfer, from the buyer
+        weth.safeTransferFrom(weth, msg.sender, receiver, royAmount);
+        
+        return (emogramsOnSale[_id], toSend);
     }
 
     //Auction ID
@@ -217,8 +215,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         uint256 toSend = emogramsOnAuction[_id].highestBid - royAmount;
 
         //Sending the royalty
-        (bool sent, bytes memory data) = receiver.call{value: royAmount}("");
-        require(sent, "Failed to send royalty");
+        weth.safeTransferFrom(weth, emogramsOnAuction[_id].highestBidder, receiver, royAmount);
 
         return (emogramsOnAuction[_id].highestBidder, toSend);
     }
@@ -311,13 +308,16 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
     {
         require(activeAuctions[_tokenAddress][_tokenId] == true, "This auction doesn't exits anymore");
 
+        //If the highestBidder is the seller, then there were no bids, so nothing to send
+
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {
 
             activeAuctions[_tokenAddress][_tokenId] = false;
             delete emogramsOnAuction[_auctionId];
             emit AuctionCanceled(_auctionId, _tokenId, msg.sender, _tokenAddress);
         }
-
+        
+        //Else we send the weth (highestBid) back to the highestBidder from the marketplace contract
         else {
 
             weth.safeTransferFrom(weth, address(this), emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].highestBid);
@@ -344,7 +344,7 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
         if(emogramsOnAuction[_auctionId].highestBidder == emogramsOnAuction[_auctionId].seller) {    
 
             emogramsOnAuction[_auctionId].highestBidder = payable(msg.sender);
-            uint256 memory amount = emogramsOnAuction[_auctionId].highestBid + defaultIncrement;
+            uint256 memory amount = emogramsOnAuction[_auctionId].highestBid;
             emogramsOnAuction[_auctionId].highestBid = weth.safeTransferFrom(weth, msg.sender, address(this), amount);
 
             emit BidPlaced(_auctionId, emogramsOnAuction[_auctionId].tokenId, msg.sender, msg.value);
@@ -374,13 +374,16 @@ import "@openzeppelinUpgrades/contracts/utils/introspection/ERC165StorageUpgrade
 
         require(emogramsOnAuction[_auctionId].highestBid != 0, "Highest bid cannot be zero in endAuctionWithBid()");
 
+        //Send royalty
         (address receiver, uint256 toSend) = sendRoyaltyAuction(_auctionId);
 
-        (bool sentSucces, bytes memory dataReceived) = emogramsOnAuction[_auctionId].seller.call{value: toSend}("");
-        require(sentSucces, "Failed to cancel");
+        //Send payment to seller from highestBidder
+        weth.safeTransferFrom(weth, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, toSend);
 
+        //Transfer NFT from seller to highestBidder
         IERC1155(emogramsOnAuction[_auctionId].tokenAddress).safeTransferFrom(emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].tokenId, 1, "");
-            
+
+        //Cleanup    
         activeAuctions[_tokenAddress][_tokenId] = false;
         emit AuctionFinished(_auctionId, _tokenId, emogramsOnAuction[_auctionId].highestBidder, emogramsOnAuction[_auctionId].seller, emogramsOnAuction[_auctionId].highestBid);
         delete emogramsOnAuction[_auctionId];
