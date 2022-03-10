@@ -1,3 +1,13 @@
+"""
+TODO:
+-where we check eth balance, instead check wETH balance
+-SRT contract balanbce check
+-check if marketplace wETH balances are correct
+"""
+
+
+
+
 import time
 import random
 from os import initgroups
