@@ -2,38 +2,21 @@
 
 name: CI
 
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: push
 
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  unit_tests:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v3.0.0
-        with:
-          python-version: 3.9.9
-          # Used to specify a package manager for caching in the default directory. Supported values: pip, pipenv.
-          cache: # optional
-          # The target architecture (x86, x64) of the Python interpreter.
-          architecture: # optional
-          # Used to pull python distributions from actions/python-versions. Since there's a default, this is typically not supplied by the user.
-          token: # optional, default is ${{ github.token }}
-          # Used to specify the path to dependency files. Supports wildcards or a list of file names for caching multiple dependencies.
-          cache-dependency-path: # optional
-        run: |
-          pip install requirements.txt
-          cd smart-contract
-          brownie test 
+    - name: Setup Python
+      uses: actions/setup-python@v3.0.0
+      with:
+        python-version: 3.9.9
+
+    - name: Run Unit tests in brownie
+      run: |
+        pip install requirements.txt
+        cd smart-contract
+        brownie test 
             
