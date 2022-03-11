@@ -15,8 +15,8 @@ jobs:
         python-version: 3.9.9
 
     - name: Run Unit tests in brownie
+      working-directory: ./smart-contract
       run: |
-        cd smart-contract
         pip install -r requirements.txt
         brownie test 
             
