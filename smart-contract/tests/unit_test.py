@@ -383,9 +383,10 @@ def test_auction_buy_finish():
     # Create auctions
     # account[0] - 1,3
     # account[1] - 0,2
-    current_time = web3.eth.get_block(web3.eth.block_number).timestamp
+
     tx_auction_2 = marketplace.createAuction(
         2, emograms, auction_time, sell_price, {'from': accounts[1], 'gas_price': gas_price})
+    current_time = web3.eth.get_block(web3.eth.block_number).timestamp
     tx_auction_3 = marketplace.createAuction(
         3, emograms, auction_time, sell_price, {'from': accounts[0], 'gas_price': gas_price})
 
@@ -399,7 +400,7 @@ def test_auction_buy_finish():
     assert auction_2_0['highestBidder'] == accounts[1]
     assert auction_2_0['startPrice'] == sell_price
     assert auction_2_0['highestBid'] == sell_price
-    assert auction_2_0['endDate'] == current_time + auction_time + 1
+    assert auction_2_0['endDate'] == current_time + auction_time
     assert auction_2_0['onAuction'] == True
 
     # Place 2 bids from different accounts
