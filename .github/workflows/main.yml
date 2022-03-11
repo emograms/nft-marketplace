@@ -4,6 +4,10 @@ name: CI
 
 on: push
 
+defaults:
+  run:
+    working-directory: ./smart-contract
+
 
 jobs:
   unit_tests:
@@ -15,7 +19,6 @@ jobs:
         python-version: 3.9.9
 
     - name: Run Unit tests in brownie
-      working-directory: ./smart-contract
       run: |
         pip install -r requirements.txt
         brownie test 
