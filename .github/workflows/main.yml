@@ -16,7 +16,7 @@ jobs:
 
     - name: Run Unit tests in brownie
       run: |
-        pip install -r requirements.txt
         cd smart-contract
+        pip install -r requirements.txt
         brownie test 
             
