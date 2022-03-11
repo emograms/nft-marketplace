@@ -11,13 +11,29 @@ jobs:
     
     steps:
     
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.0.0
+    
     - name: Setup Python
       uses: actions/setup-python@v3.0.0
       with:
         python-version: 3.9.9
+    
+    - name: Checkout
+      uses: actions/checkout@v3.0.0
+      
+    - name: Install deps
+      working-directory: ./smart-contract
+      run: |
+        npm install ganache --global
+        pip install -r requirements.txt
+      
+    - name: Compile
+      working-directory: ./smart-contract
+      run: brownie compile
+    
 
     - name: Run Unit tests in brownie
-      run: |
-        pip install -r smart-contract/requirements.txt
-        brownie test 
+      working-directory: ./smart-contract
+      run: brownie test
             
