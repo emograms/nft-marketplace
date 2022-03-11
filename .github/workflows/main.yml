@@ -20,7 +20,8 @@ jobs:
       uses: actions/checkout@v3.0.0
 
     - name: Run Unit tests in brownie
+      working-directory: ./smart-contract
       run: |
-        ls -lht
-        pwd
+        pip install -r requirements.txt
+        brownie test
             
