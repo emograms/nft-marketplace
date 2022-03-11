@@ -8,7 +8,6 @@ defaults:
   run:
     working-directory: ./smart-contract
 
-
 jobs:
   unit_tests:
     runs-on: ubuntu-latest
