@@ -4,14 +4,17 @@ name: CI
 
 on: push
 
-defaults:
-  run:
-    working-directory: ./smart-contract
-
 jobs:
   unit_tests:
+  
+    defaults:
+      run:
+        working-directory: smart-contract
+    
     runs-on: ubuntu-latest
+    
     steps:
+    
     - name: Setup Python
       uses: actions/setup-python@v3.0.0
       with:
