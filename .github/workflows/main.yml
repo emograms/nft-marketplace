@@ -18,6 +18,5 @@ jobs:
 
     - name: Run Unit tests in brownie
       run: |
-        pwd
         ls -lht
             
