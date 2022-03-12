@@ -316,9 +316,10 @@ def test_auction_cancel():
         marketplace, True, {'from': accounts[1], 'gas_price': gas_price})
     # timestamp = round(time.time())
     # timestamp += web3.eth.block_number
-    timestamp = web3.eth.get_block(web3.eth.block_number).timestamp
+
     tx_create = marketplace.createAuction(
         token_id, emograms, duration, start_price, {'from': accounts[0], 'gas_price': gas_price})
+    timestamp = web3.eth.get_block(web3.eth.block_number).timestamp
     assert marketplace.emogramsOnAuction(0)['onAuction'] == True
     assert tx_create.events['AuctionCreated']['id'] == tx_create.return_value
     assert tx_create.events['AuctionCreated']['tokenId'] == token_id
@@ -326,7 +327,7 @@ def test_auction_cancel():
     assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
     assert tx_create.events['AuctionCreated']['startPrice'] == start_price
     assert (tx_create.events['AuctionCreated']
-            ['duration'] == timestamp+duration+1)
+            ['duration'] == timestamp+duration)
 
     # Testing a cancel from another account
     try:
@@ -454,7 +455,7 @@ def test_auction_buy_finish():
     # except Exception as e:
     #     assert 'Auction is still ongoing' in e.revert_msg
 
-    chain.mine(timestamp=current_time + auction_time)
+    chain.mine(timestamp=current_time + auction_time + 1)
 
     # Wait for endDate and finish auctions
     tx_finish_bid = marketplace.finishAuction(
