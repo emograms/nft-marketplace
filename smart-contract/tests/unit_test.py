@@ -356,7 +356,7 @@ def test_auction_buy_finish():
 
     '''
     marketplace, SRToken, wETH, emograms = test_deploy()
-    auction_time = 6
+    auction_time = 100
     royalty_pct = 0.075
     seller_init_balance_1 = wETH.balanceOf(accounts[0])
     seller_init_balance_2 = wETH.balanceOf(accounts[1])
@@ -393,6 +393,7 @@ def test_auction_buy_finish():
     auction_2_0 = marketplace.emogramsOnAuction(tx_auction_2.return_value)
     auction_3_0 = marketplace.emogramsOnAuction(tx_auction_3.return_value)
 
+    # Forward time to end of auction
     assert auction_2_0['auctionId'] == tx_auction_2.return_value
     assert auction_2_0['tokenAddress'] == emograms
     assert auction_2_0['tokenId'] == 2
@@ -452,6 +453,8 @@ def test_auction_buy_finish():
             emograms, 3, 1, {'from': accounts[0], 'gas_price': gas_price})
     except Exception as e:
         assert 'Auction is still ongoing' in e.revert_msg
+
+    chain.mine(timestamp=current_time + auction_time)
 
     # Wait for endDate and finish auctions
     tx_finish_bid = marketplace.finishAuction(
