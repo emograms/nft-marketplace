@@ -8,7 +8,7 @@ TODO:
 from brownie import Contract
 from brownie.network import gas_price, priority_fee
 from brownie.network.gas.strategies import GasNowStrategy
-from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, FounderVault, ERC1967Proxy, ScultureRedemptionToken, accounts, network
+from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, FounderVault, ERC1967Proxy, SculptureRedemptionToken, accounts, network
 import brownie
 import time
 import eth_utils
@@ -19,6 +19,7 @@ import time
 import os
 def clear(): return os.system('clear')
 
+print(network.show_active() + "\n")
 
 # VARS
 IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmdLiV539qPnN9tcUikV5NPD5DWSED1uzGFFa3wvX9ent7/{id}/'
@@ -155,7 +156,7 @@ def encode_function_data(initializer=None, *args):
 # DEPLOYMENT
 
 
-def deploy_network(testMode=False, publishSource=True, saveJSON=True):
+def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     # Deploying contracts
 
@@ -201,5 +202,9 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
     print("Marketplace implementation deployed at:",
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
+
+def main():
+    set_gas()
+    deploy_network()
 
     # todo: mint emogram supply, set origin hashes
