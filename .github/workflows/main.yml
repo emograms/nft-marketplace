@@ -17,7 +17,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: smart-contract
+          file: smart-contract/Dockerfile
         # with:
         #   push: true
         #   tags: user/app:latest
