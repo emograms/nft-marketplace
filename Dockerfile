@@ -12,4 +12,3 @@ COPY . ../brownie-config.yaml .
 RUN rm -rf build/*
 RUN pip install -r requirements.txt
 RUN brownie compile
-RUN brownie test
