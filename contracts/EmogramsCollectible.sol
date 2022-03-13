@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 
 contract EmogramsCollectible is
     ERC1155,
@@ -36,6 +38,8 @@ contract EmogramsCollectible is
 
     string public name = "Emograms";
     string public symbol = "EGRAMS";
+    string public baseURI;
+
 
     mapping(uint256 => address) public ownerOfById;
     mapping(uint256 => bytes32) public hashes;
@@ -45,7 +49,9 @@ contract EmogramsCollectible is
     uint256 public redeemedCounter = 0;
     mapping(uint256 => bool) public redeemAble;
     mapping(uint256 => bytes32) public originalityHash;
-    mapping(uint256 => string) public tokenURI;
+
+    using Strings for uint256;
+
 
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
@@ -71,6 +77,8 @@ contract EmogramsCollectible is
         uint256 indexed _tokenid
     );
     event TokensDistributedSRT(address indexed distributor);
+    event BaseURIChanged(string baseURI);
+
 
     constructor(
         address _beneficiary,
@@ -86,19 +94,26 @@ contract EmogramsCollectible is
         setRedeemAble();
     }
 
-    function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
-        _setURI(newuri);
-    }
-
-    function setTokenURI(uint256 _id, string memory _uri)
+    function setBaseURI(string memory newURI)
         public
-        onlyRole(MINTER_ROLE)
+        onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        tokenURI[_id] = _uri;
+        baseURI = newURI;
+        emit BaseURIChanged(baseURI);
     }
 
-    function getTokenURI(uint256 _id) public view returns (string memory) {
-        return tokenURI[_id];
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                : "";
+    }
+
+    function contractURI() public view returns (string memory) {
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, "1"))
+                : "";
     }
 
     function setOrigHash(bytes32[] memory _hashes)

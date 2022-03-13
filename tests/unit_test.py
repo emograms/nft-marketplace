@@ -316,7 +316,6 @@ def test_auction_cancel():
         marketplace, True, {'from': accounts[1], 'gas_price': gas_price})
     # timestamp = round(time.time())
     # timestamp += web3.eth.block_number
-
     tx_create = marketplace.createAuction(
         token_id, emograms, duration, start_price, {'from': accounts[0], 'gas_price': gas_price})
     timestamp = web3.eth.get_block(web3.eth.block_number).timestamp
@@ -326,8 +325,7 @@ def test_auction_cancel():
     assert tx_create.events['AuctionCreated']['seller'] == accounts[0]
     assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
     assert tx_create.events['AuctionCreated']['startPrice'] == start_price
-    assert (tx_create.events['AuctionCreated']
-            ['duration'] == timestamp+duration)
+    assert (tx_create.events['AuctionCreated']['duration'] == timestamp+duration)
 
     # Testing a cancel from another account
     try:
@@ -357,7 +355,8 @@ def test_auction_buy_finish():
 
     '''
     marketplace, SRToken, wETH, emograms = test_deploy()
-    auction_time = 100
+    auction_time = 6
+
     royalty_pct = 0.075
     seller_init_balance_1 = wETH.balanceOf(accounts[0])
     seller_init_balance_2 = wETH.balanceOf(accounts[1])
@@ -449,12 +448,6 @@ def test_auction_buy_finish():
     assert tx_bid_2_1.events['BidPlaced']['bid'] == bid_price_2
 
     # Check if the auction can be finished before endDate
-    # try:
-    #     marketplace.finishAuction(
-    #         emograms, 3, 1, {'from': accounts[0], 'gas_price': gas_price})
-    # except Exception as e:
-    #     assert 'Auction is still ongoing' in e.revert_msg
-
     chain.mine(timestamp=current_time + auction_time + 1)
 
     # Wait for endDate and finish auctions

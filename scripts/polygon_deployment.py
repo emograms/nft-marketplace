@@ -41,6 +41,7 @@ TST = '0x2d7882beDcbfDDce29Ba99965dd3cdF7fcB10A1e'
 print('\n----- Deployment script loaded -----')
 print("Active Network: ")
 print(network.show_active() + "\n")
+
 if network.show_active() == 'polygon-mainnet' or network.show_active() == 'mainnet':
     print("ATTENTION: YOPU ARE DEPLOYING TO POLYGON MAINNET")
 print('Wallet addreses used:')
@@ -155,7 +156,6 @@ def encode_function_data(initializer=None, *args):
 
 # DEPLOYMENT
 
-
 def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     # Deploying contracts
@@ -207,5 +207,4 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 def main():
     set_gas()
     deploy_network()
-
     # todo: mint emogram supply, set origin hashes
