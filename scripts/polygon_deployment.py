@@ -201,6 +201,26 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Marketplace implementation deployed at:",
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
+    
+    print("minting emograms\n")
+
+    mint_token_ids = list(range(2, 101))
+    mint_amounts = [1 for i in range(99)]
+    emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", tx_params)
+
+    print("Emograms minted!\n")
+    print("Setting URI\n")
+
+    emograms.setBaseURI("https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/", tx_params)
+    emograms.setURI("https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/{id}", tx_params)
+
+    print("URI set!\n")
+    print("Contracts deployed on:", network.show_active())
+    print("Emograms deployed at:", emograms.address)
+    print("Marketplace proxy deployed at:", marketplace_proxy.address)
+    print("Marketplace implementation deployed at:",
+          marketplace_contract.address)
+    print("SRT deployed at:", SRToken.address)
 
 def main():
     set_gas()

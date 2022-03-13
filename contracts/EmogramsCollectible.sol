@@ -112,7 +112,7 @@ contract EmogramsCollectible is
     function contractURI() public view returns (string memory) {
         return
             bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, "1"))
+                ? string(abi.encodePacked(baseURI, "0000000000000000000000000000000000000000000000000000000000000001"))
                 : "";
     }
 
