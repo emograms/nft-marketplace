@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.2;
+
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -10,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+
 
 contract EmogramsCollectible is
     ERC1155,
@@ -38,6 +40,7 @@ contract EmogramsCollectible is
     string public symbol = "EGRAMS";
     string public baseURI;
 
+
     mapping(uint256 => address) public ownerOfById;
     mapping(uint256 => bytes32) public hashes;
 
@@ -48,6 +51,7 @@ contract EmogramsCollectible is
     mapping(uint256 => bytes32) public originalityHash;
 
     using Strings for uint256;
+
 
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
@@ -74,6 +78,7 @@ contract EmogramsCollectible is
     );
     event TokensDistributedSRT(address indexed distributor);
     event BaseURIChanged(string baseURI);
+
 
     constructor(
         address _beneficiary,

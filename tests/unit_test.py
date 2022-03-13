@@ -316,17 +316,16 @@ def test_auction_cancel():
         marketplace, True, {'from': accounts[1], 'gas_price': gas_price})
     # timestamp = round(time.time())
     # timestamp += web3.eth.block_number
-    timestamp = web3.eth.get_block(web3.eth.block_number).timestamp
     tx_create = marketplace.createAuction(
         token_id, emograms, duration, start_price, {'from': accounts[0], 'gas_price': gas_price})
+    timestamp = web3.eth.get_block(web3.eth.block_number).timestamp
     assert marketplace.emogramsOnAuction(0)['onAuction'] == True
     assert tx_create.events['AuctionCreated']['id'] == tx_create.return_value
     assert tx_create.events['AuctionCreated']['tokenId'] == token_id
     assert tx_create.events['AuctionCreated']['seller'] == accounts[0]
     assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
     assert tx_create.events['AuctionCreated']['startPrice'] == start_price
-    assert (tx_create.events['AuctionCreated']
-            ['duration'] == timestamp+duration+1)
+    assert (tx_create.events['AuctionCreated']['duration'] == timestamp+duration)
 
     # Testing a cancel from another account
     try:
@@ -357,6 +356,7 @@ def test_auction_buy_finish():
     '''
     marketplace, SRToken, wETH, emograms = test_deploy()
     auction_time = 6
+
     royalty_pct = 0.075
     seller_init_balance_1 = wETH.balanceOf(accounts[0])
     seller_init_balance_2 = wETH.balanceOf(accounts[1])
@@ -383,15 +383,17 @@ def test_auction_buy_finish():
     # Create auctions
     # account[0] - 1,3
     # account[1] - 0,2
-    current_time = web3.eth.get_block(web3.eth.block_number).timestamp
+
     tx_auction_2 = marketplace.createAuction(
         2, emograms, auction_time, sell_price, {'from': accounts[1], 'gas_price': gas_price})
+    current_time = web3.eth.get_block(web3.eth.block_number).timestamp
     tx_auction_3 = marketplace.createAuction(
         3, emograms, auction_time, sell_price, {'from': accounts[0], 'gas_price': gas_price})
 
     auction_2_0 = marketplace.emogramsOnAuction(tx_auction_2.return_value)
     auction_3_0 = marketplace.emogramsOnAuction(tx_auction_3.return_value)
 
+    # Forward time to end of auction
     assert auction_2_0['auctionId'] == tx_auction_2.return_value
     assert auction_2_0['tokenAddress'] == emograms
     assert auction_2_0['tokenId'] == 2
@@ -399,7 +401,7 @@ def test_auction_buy_finish():
     assert auction_2_0['highestBidder'] == accounts[1]
     assert auction_2_0['startPrice'] == sell_price
     assert auction_2_0['highestBid'] == sell_price
-    assert auction_2_0['endDate'] == current_time + auction_time + 1
+    assert auction_2_0['endDate'] == current_time + auction_time
     assert auction_2_0['onAuction'] == True
 
     # Place 2 bids from different accounts
@@ -446,11 +448,7 @@ def test_auction_buy_finish():
     assert tx_bid_2_1.events['BidPlaced']['bid'] == bid_price_2
 
     # Check if the auction can be finished before endDate
-    try:
-        marketplace.finishAuction(
-            emograms, 3, 1, {'from': accounts[0], 'gas_price': gas_price})
-    except Exception as e:
-        assert 'Auction is still ongoing' in e.revert_msg
+    chain.mine(timestamp=current_time + auction_time + 1)
 
     # Wait for endDate and finish auctions
     tx_finish_bid = marketplace.finishAuction(

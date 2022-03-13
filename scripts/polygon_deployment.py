@@ -8,7 +8,7 @@ TODO:
 from brownie import Contract
 from brownie.network import gas_price, priority_fee
 from brownie.network.gas.strategies import GasNowStrategy
-from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, FounderVault, ERC1967Proxy, ScultureRedemptionToken, accounts, network
+from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, FounderVault, ERC1967Proxy, SculptureRedemptionToken, accounts, network
 import brownie
 import time
 import eth_utils
@@ -19,6 +19,7 @@ import time
 import os
 def clear(): return os.system('clear')
 
+print(network.show_active() + "\n")
 
 # VARS
 IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmdLiV539qPnN9tcUikV5NPD5DWSED1uzGFFa3wvX9ent7/{id}/'
@@ -40,7 +41,8 @@ TST = '0x2d7882beDcbfDDce29Ba99965dd3cdF7fcB10A1e'
 print('\n----- Deployment script loaded -----')
 print("Active Network: ")
 print(network.show_active() + "\n")
-if network.show_active() != 'mumbai':
+
+if network.show_active() == 'polygon-mainnet' or network.show_active() == 'mainnet':
     print("ATTENTION: YOPU ARE DEPLOYING TO POLYGON MAINNET")
 print('Wallet addreses used:')
 print('DEPLOYER:', DEPLOYER)
@@ -154,16 +156,16 @@ def encode_function_data(initializer=None, *args):
 
 # DEPLOYMENT
 
-
-def deploy_network(testMode=False, publishSource=True, saveJSON=True):
+def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     # Deploying contracts
+    print("Current network: ", network.show_active(), "\n")
 
     marketplace_contract = EmogramMarketplaceUpgradeable.deploy(
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     SRToken = SculptureRedemptionToken.deploy(
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
@@ -174,7 +176,7 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
         emogram_constructor['_SRT'],
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     marketplace_encoded_init_function = encode_function_data(True)
     proxy = ERC1967Proxy.deploy(
@@ -202,4 +204,7 @@ def deploy_network(testMode=False, publishSource=True, saveJSON=True):
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
 
+def main():
+    set_gas()
+    deploy_network()
     # todo: mint emogram supply, set origin hashes

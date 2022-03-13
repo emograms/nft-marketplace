@@ -1,0 +1,8 @@
+{
+    "mumbai": {
+        "address": "https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/"
+    },
+    "mainnet": {
+        "address": "https://cloudflare-ipfs.com/ipfs/QmdcpM87UE6uKwRoN5wUmcoNMMEfzUYPQixTamKcAX4ZY5/"
+    }
+}
