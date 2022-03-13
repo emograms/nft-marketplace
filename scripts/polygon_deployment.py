@@ -59,11 +59,9 @@ def loadJSON():
             )]['EMOGRAMMARKETPLACEUPGRADEABLE']
             EMOGRAMSCOLLECTIBLE_JSON = deploymen_json[network.show_active(
             )]['EMOGRAMSCOLLECTIBLE']
-            FOUNDERVAULT_JSON = deploymen_json[network.show_active(
-            )]['FOUNDERVAULT']
             PROXY_JSON = deploymen_json[network.show_active()]['PROXY']
 
-            return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON
+            return EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, PROXY_JSON
         else:
             return None, None, None, None
 
@@ -77,7 +75,7 @@ def loadJSONRaw():
 
 # Loading deploymend and IPFS JSONs
 DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
-EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, FOUNDERVAULT_JSON, PROXY_JSON = loadJSON()
+EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, PROXY_JSON = loadJSON()
 
 
 def set_gas():
