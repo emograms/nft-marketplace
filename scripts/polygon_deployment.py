@@ -159,12 +159,13 @@ def encode_function_data(initializer=None, *args):
 def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     # Deploying contracts
+    print("Current network: ", network.show_active(), "\n")
 
     marketplace_contract = EmogramMarketplaceUpgradeable.deploy(
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     SRToken = SculptureRedemptionToken.deploy(
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
@@ -175,7 +176,7 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
         emogram_constructor['_SRT'],
-        {'from': DEPLOYER, 'gas_price': gas_price}, publish_source=publishSource)
+        tx_params, publish_source=publishSource)
 
     marketplace_encoded_init_function = encode_function_data(True)
     proxy = ERC1967Proxy.deploy(
@@ -202,5 +203,9 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Marketplace implementation deployed at:",
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
+
+def main():
+    set_gas()
+    deploy_network()
 
     # todo: mint emogram supply, set origin hashes
