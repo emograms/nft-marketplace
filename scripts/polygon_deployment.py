@@ -41,7 +41,7 @@ TST = '0x2d7882beDcbfDDce29Ba99965dd3cdF7fcB10A1e'
 print('\n----- Deployment script loaded -----')
 print("Active Network: ")
 print(network.show_active() + "\n")
-if network.show_active() != 'mumbai':
+if network.show_active() == 'polygon-mainnet' or network.show_active() == 'mainnet':
     print("ATTENTION: YOPU ARE DEPLOYING TO POLYGON MAINNET")
 print('Wallet addreses used:')
 print('DEPLOYER:', DEPLOYER)
@@ -202,9 +202,5 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Marketplace implementation deployed at:",
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
-
-def main():
-    set_gas()
-    deploy_network()
 
     # todo: mint emogram supply, set origin hashes
