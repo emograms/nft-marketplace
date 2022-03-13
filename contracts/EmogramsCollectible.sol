@@ -116,6 +116,13 @@ contract EmogramsCollectible is
                 : "";
     }
 
+    function setURI(string memory _newuri) 
+        public
+        onlyRole(URI_SETTER_ROLE) 
+    {
+        _setURI(_newuri);
+    }
+
     function setOrigHash(bytes32[] memory _hashes)
         public
         onlyRole(MINTER_ROLE)
