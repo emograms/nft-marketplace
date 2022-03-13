@@ -22,7 +22,8 @@ def clear(): return os.system('clear')
 print(network.show_active() + "\n")
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmdLiV539qPnN9tcUikV5NPD5DWSED1uzGFFa3wvX9ent7/{id}/'
+IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/{id}/'
+IPFS_BASEURI = 'https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/'
 IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2, 101)]
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
@@ -201,7 +202,7 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Marketplace implementation deployed at:",
           marketplace_contract.address)
     print("SRT deployed at:", SRToken.address)
-    
+
     print("minting emograms\n")
 
     mint_token_ids = list(range(2, 101))
@@ -211,8 +212,8 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Emograms minted!\n")
     print("Setting URI\n")
 
-    emograms.setBaseURI("https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/", tx_params)
-    emograms.setURI("https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/{id}", tx_params)
+    emograms.setBaseURI(IPFS_BASEURI, tx_params)
+    emograms.setURI(IPFS_URI, tx_params)
 
     print("URI set!\n")
     print("Contracts deployed on:", network.show_active())
