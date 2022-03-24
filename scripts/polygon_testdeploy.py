@@ -1,14 +1,7 @@
-"""
-TODO:
--set WETH/TST address in marketplace init
--mint SRT
-"""
-
-
 from brownie import Contract
 from brownie.network import gas_price, priority_fee
 from brownie.network.gas.strategies import GasNowStrategy
-from brownie import EmogramsCollectible, EmogramMarketplaceUpgradeable, ERC1967Proxy, SculptureRedemptionToken, accounts, network
+from brownie import TestCollectible, accounts, network
 import brownie
 import time
 import eth_utils
@@ -161,48 +154,19 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     # Deploying contracts
     print("Current network: ", network.show_active(), "\n")
 
-    marketplace_contract = EmogramMarketplaceUpgradeable.deploy(
-        tx_params, publish_source=publishSource)
-
-    SRToken = SculptureRedemptionToken.deploy(
-        tx_params, publish_source=publishSource)
 
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
-        "_fee": 750,
-        "_SRT": SRToken.address}
+        "_fee": 750
+        }
 
-    emograms = EmogramsCollectible.deploy(
+    emograms = TestCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
-        emogram_constructor['_SRT'],
         tx_params, publish_source=publishSource)
-
-    marketplace_encoded_init_function = encode_function_data(True)
-    proxy = ERC1967Proxy.deploy(
-        marketplace_contract, marketplace_encoded_init_function, tx_params, publish_source=publishSource)
-    marketplace_proxy = Contract.from_abi(
-        "EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
-    marketplace_proxy.initialize(testMode, WETH, tx_params)
-
-    # # Founder Vault deployment Miki, Csongor, Patr, Adr
-    # founders = [MIKI, CSONGOR, PATR, ADR]
-    # founders_pct = [0.5, 0.05, 0.225, 0.225]
-    # founders_pct = [x*10000 for x in founders_pct]
-    # vault = FounderVault.deploy(
-    #     founders, founders_pct, tx_params, publish_source=publishSource)
-    # # Add founder role to vault
-    # marketplace_proxy.addFounder(vault, tx_params)
-
-    # Set beneficiary on EmogramsCollectible
-    # emograms.setBeneficiary(vault)
 
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
-    print("Marketplace proxy deployed at:", marketplace_proxy.address)
-    print("Marketplace implementation deployed at:",
-          marketplace_contract.address)
-    print("SRT deployed at:", SRToken.address)
 
     print("minting emograms\n")
 
@@ -219,10 +183,6 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("URI set!\n")
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
-    print("Marketplace proxy deployed at:", marketplace_proxy.address)
-    print("Marketplace implementation deployed at:",
-          marketplace_contract.address)
-    print("SRT deployed at:", SRToken.address)
 
 def main():
     set_gas()
