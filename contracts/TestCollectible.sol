@@ -66,13 +66,15 @@ contract TestCollectible is
 
     constructor(
         address _beneficiary,
-        uint96 _fee
+        uint96 _fee,
+        bool _closed
     ) ERC1155("") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(URI_SETTER_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
         _setDefaultRoyalty(_beneficiary, _fee); //Nominator, cannot be >10000, 750 is 7.5%
+        isClosed = _closed;
     }
 
     function setBaseURI(string memory newURI)
@@ -106,6 +108,7 @@ contract TestCollectible is
     function ownerOf(uint256 _tokenId, address _maybeOwner)
         public
         view
+        notClosed()
         returns (bool)
     {
         return balanceOf(_maybeOwner, _tokenId) != 0;
@@ -140,7 +143,8 @@ contract TestCollectible is
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) public override(ERC1155) {
+    ) public override(ERC1155) notClosed()
+    {
         super.safeTransferFrom(from, to, id, amount, data);
         ownerOfById[id] = to;
     }
@@ -159,6 +163,11 @@ contract TestCollectible is
         uint256[] memory _values
     ) public override(ERC1155Burnable) onlyRole(MINTER_ROLE) notClosed(){
         super.burnBatch(_account, _ids, _values);
+    }
+
+    function kill(address payable _benef) onlyRole(DEFAULT_ADMIN_ROLE) public notClosed() {
+        isClosed = true;
+        selfdestruct(_benef);
     }
 
     function supportsInterface(bytes4 interfaceId)

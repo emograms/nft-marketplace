@@ -157,12 +157,14 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
-        "_fee": 750
+        "_fee": 750,
+        "_closed": False
         }
 
     emograms = TestCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
+        emogram_constructor['_closed'],
         tx_params, publish_source=publishSource)
 
     print("Contracts deployed on:", network.show_active())
@@ -184,7 +186,27 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
 
+def killContract():
+
+    kill = input("Do you want to burn the tokens and kill the contract? (1/0) \n")
+
+    if kill == 1:
+        burn_token_ids = list(range(2, 101))
+        burn_amounts = [1 for i in range(99)]
+
+        print("Testing self-destruct\n")
+        print("Burning Tokens...\n")
+
+        emograms.burnBatch(DEPLOYER, burn_token_ids, burn_amounts, tx_params)
+
+        emograms.kill(DEPLOYER, tx_params)
+
+        print("self-destruct complete!\n")
+
+    else:
+        pass
+
 def main():
     set_gas()
     deploy_network()
-    # todo: mint emogram supply, set origin hashes
+    killContract()
