@@ -39,6 +39,7 @@ contract EmogramsCollectible is
     string public name = "Emograms";
     string public symbol = "EGRAMS";
     string public baseURI;
+    string public contracturi;
 
 
     mapping(uint256 => address) public ownerOfById;
@@ -49,6 +50,8 @@ contract EmogramsCollectible is
     uint256 public redeemedCounter = 0;
     mapping(uint256 => bool) public redeemAble;
     mapping(uint256 => bytes32) public originalityHash;
+
+    address OPENSEA_ADDRESS;
 
     using Strings for uint256;
 
@@ -83,7 +86,8 @@ contract EmogramsCollectible is
     constructor(
         address _beneficiary,
         uint96 _fee,
-        address _SRT
+        address _SRT,
+        address _OPENSEA
     ) ERC1155("") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(URI_SETTER_ROLE, msg.sender);
@@ -91,6 +95,7 @@ contract EmogramsCollectible is
         _setupRole(BENEFICIARY_UPGRADER_ROLE, msg.sender);
         _setDefaultRoyalty(_beneficiary, _fee); //Nominator, cannot be >10000, 750 is 7.5%
         SRT = ERC20Burnable(_SRT);
+        OPENSEA_ADDRESS = _OPENSEA;
         setRedeemAble();
     }
 
@@ -109,11 +114,14 @@ contract EmogramsCollectible is
                 : "";
     }
 
-    function contractURI() public view returns (string memory) {
-        return
-            bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, "0000000000000000000000000000000000000000000000000000000000000001"))
-                : "";
+    function setContractURI(string memory _contractURI) public 
+    {
+        contracturi = _contractURI;
+    }
+
+    function contractURI() public view returns (string memory) 
+    {
+        return contracturi;
     }
 
     function setURI(string memory _newuri) 
@@ -121,6 +129,21 @@ contract EmogramsCollectible is
         onlyRole(URI_SETTER_ROLE) 
     {
         _setURI(_newuri);
+    }
+
+    /**
+   * Override isApprovedForAll to auto-approve OS's proxy contract
+   */
+    function isApprovedForAll(
+        address _owner,
+        address _operator
+    ) public override view returns (bool isOperator) {
+        // if OpenSea's ERC1155 Proxy Address is detected, auto-return true
+       if (_operator == OPENSEA_ADDRESS) {
+            return true;
+        }
+        // otherwise, use the default ERC1155.isApprovedForAll()
+        return ERC1155.isApprovedForAll(_owner, _operator);
     }
 
     function setOrigHash(bytes32[] memory _hashes)
