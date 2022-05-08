@@ -1,7 +1,7 @@
 from brownie import Contract
 from brownie.network import gas_price, priority_fee
 from brownie.network.gas.strategies import GasNowStrategy
-from brownie import TestCollectible, accounts, network
+from brownie import TestCollectible, EmogramsCollectible, accounts, network
 import brownie
 import time
 import eth_utils
@@ -160,13 +160,15 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
         "_fee": 750,
-        "_closed": False
+        "_SRT": "0x39ffa5550E30993FA255883D7891Eac259C91F26",
+        "_OPENSEA": "0x207Fa8Df3a17D96Ca7EA4f2893fcdCb78a304101"
         }
 
-    emograms = TestCollectible.deploy(
+    emograms = EmogramsCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
-        emogram_constructor['_closed'],
+        emogram_constructor['_SRT'],
+        emogram_constructor['_OPENSEA'],
         tx_params, publish_source=publishSource)
 
     print("Contracts deployed on:", network.show_active())
@@ -213,4 +215,4 @@ def killContract(emorams):
 def main():
     set_gas()
     emograms = deploy_network()
-    killContract(emograms)
+    #killContract(emograms)
