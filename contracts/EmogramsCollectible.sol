@@ -80,6 +80,8 @@ contract EmogramsCollectible is
         uint256 indexed _tokenid
     );
     event TokensDistributedSRT(address indexed distributor);
+    event MigratedToPolygon(address indexed owner, uint256 indexed tokenId);
+    event PolygonMigration();
     event BaseURIChanged(string baseURI);
 
 
@@ -266,6 +268,29 @@ contract EmogramsCollectible is
         redeemedCounter += 1;
         SRT.burnFrom(msg.sender, 9);
         emit SculptureRedeemed(_tokenId, msg.sender);
+    }
+
+    function polygonMigrate(
+        address[] memory _owners,
+        uint256[] memory _ids,
+        address memory deployer
+    ) {
+        require(_owners.length == _ids.length, "Length of owner addresses is not equal to ids");
+        require(_ids.length == 99, "Not enough Emograms to migrate");
+
+        for(uint i = 2; i <= _ids.length + 2; i++) {
+
+            if(_owners[i-2] == deployer || _owners[i-2] == address(0)) {
+                emit MigratedToPolygon(_owners[i-2], _ids[i-2]);
+                }
+
+            else {
+                _safeTransferFrom(deployer, _owners[i-2], _ids[i-2], 1);
+                emit MigratedToPolygon(_owners[i-2], _ids[i-2]);
+            }
+        }
+
+        emit PolygonMigration();
     }
 
     function verifyOrig(bytes memory _origString, uint256 _tokenId)

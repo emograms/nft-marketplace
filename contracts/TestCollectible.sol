@@ -165,7 +165,7 @@ contract TestCollectible is
         super.burnBatch(_account, _ids, _values);
     }
 
-    function kill(address payable _benef) onlyRole(DEFAULT_ADMIN_ROLE) public notClosed() {
+    function kill(address payable _benef) onlyRole(DEFAULT_ADMIN_ROLE) notClosed() public {
         isClosed = true;
         selfdestruct(_benef);
     }

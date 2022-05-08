@@ -12,6 +12,7 @@ import time
 import os
 def clear(): return os.system('clear')
 
+clear()
 print(network.show_active() + "\n")
 
 # VARS
@@ -39,13 +40,14 @@ print(network.show_active() + "\n")
 
 if network.show_active() == 'polygon-mainnet' or network.show_active() == 'mainnet':
     print("ATTENTION: YOPU ARE DEPLOYING TO POLYGON MAINNET")
+
 print('Wallet addreses used:')
 print('DEPLOYER:', DEPLOYER)
 print('\nUse set_gas() before interacting!')
 
 
 # Loading DEPLOYMENT_JSON_PATH for contract loading
-def loadJSON():
+""" def loadJSON():
     if os.path.isfile(DEPLOYMENT_JSON_PATH):
         with open(DEPLOYMENT_JSON_PATH) as json_file:
             deploymen_json = json.load(json_file)
@@ -65,12 +67,12 @@ def loadJSONRaw():
     if os.path.isfile(DEPLOYMENT_JSON_PATH):
         with open(DEPLOYMENT_JSON_PATH) as json_file:
             deploymen_json = json.load(json_file)
-        return deploymen_json
+        return deploymen_json """
 
 
 # Loading deploymend and IPFS JSONs
-DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
-EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, PROXY_JSON = loadJSON()
+""" DEPLOYMENT_JSON_PATH = 'latest_deployment.json'
+EMOGRAMMARKETPLACEUPGRADEABLE_JSON, EMOGRAMSCOLLECTIBLE_JSON, PROXY_JSON = loadJSON() """
 
 
 def set_gas():
@@ -186,20 +188,22 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
 
-def killContract():
+    return emograms
+
+def killContract(emorams):
 
     kill = input("Do you want to burn the tokens and kill the contract? (1/0) \n")
 
-    if kill == 1:
+    if kill == '1':
         burn_token_ids = list(range(2, 101))
         burn_amounts = [1 for i in range(99)]
 
         print("Testing self-destruct\n")
         print("Burning Tokens...\n")
 
-        emograms.burnBatch(DEPLOYER, burn_token_ids, burn_amounts, tx_params)
+        emorams.burnBatch(DEPLOYER, burn_token_ids, burn_amounts, tx_params)
 
-        emograms.kill(DEPLOYER, tx_params)
+        emorams.kill(DEPLOYER, tx_params)
 
         print("self-destruct complete!\n")
 
@@ -208,5 +212,5 @@ def killContract():
 
 def main():
     set_gas()
-    deploy_network()
-    killContract()
+    emograms = deploy_network()
+    killContract(emograms)
