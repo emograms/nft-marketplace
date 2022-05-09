@@ -275,20 +275,16 @@ contract EmogramsCollectible is
         uint256[] memory _ids,
         address deployer
     ) public onlyRole(MINTER_ROLE) {
-        
+
         require(_owners.length == _ids.length, "Length of owner addresses is not equal to ids");
         require(_ids.length == 99, "Not enough Emograms to migrate");
 
-        for(uint i = 2; i <= _ids.length + 2; i++) {
+        for(uint i = 0; i <= _ids.length; i++) {
 
-            if(_owners[i-2] == deployer || _owners[i-2] == address(0)) {
-                emit MigratedToPolygon(_owners[i-2], _ids[i-2]);
-                }
-
-            else {
+            if(_owners[i] != deployer && _owners[i] != address(0)) {
                 _safeTransferFrom(deployer, _owners[i-2], _ids[i-2], 1, "");
                 emit MigratedToPolygon(_owners[i-2], _ids[i-2]);
-            }
+                }
         }
 
         emit PolygonMigration();
