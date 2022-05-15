@@ -687,6 +687,11 @@ contract EmogramMarketplaceUpgradeable is
         return isTestPeriod;
     }
 
+    function setWETH(address _wethAddress) public onlyRole(FOUNDER_ROLE) {
+        require(_wethAddress != address(0));
+        weth = IERC20(_wethAddress);
+    }
+
     function _authorizeUpgrade(address)
         internal
         override
