@@ -302,7 +302,6 @@ def test_fixed_buy():
 
     assert wETH.balanceOf(accounts[1]) == account_1_final
     assert wETH.balanceOf(accounts[2]) == buyer_init_balance - sell_price
-    assert False
 
 
 def test_auction_cancel():
