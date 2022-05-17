@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-
 contract EmogramsCollectible is
     ERC1155,
     AccessControl,
@@ -41,7 +40,6 @@ contract EmogramsCollectible is
     string public baseURI;
     string public contracturi;
 
-
     mapping(uint256 => address) public ownerOfById;
     mapping(uint256 => bytes32) public hashes;
 
@@ -54,7 +52,6 @@ contract EmogramsCollectible is
     address OPENSEA_ADDRESS;
 
     using Strings for uint256;
-
 
     modifier notFullEmograms() {
         require(emogramId <= maxEmogramNum, "Every emogram has been minted");
@@ -83,7 +80,6 @@ contract EmogramsCollectible is
     event MigratedToPolygon(address indexed owner, uint256 indexed tokenId);
     event PolygonMigration();
     event BaseURIChanged(string baseURI);
-
 
     constructor(
         address _beneficiary,
@@ -116,32 +112,29 @@ contract EmogramsCollectible is
                 : "";
     }
 
-    function setContractURI(string memory _contractURI) public 
-    {
+    function setContractURI(string memory _contractURI) public {
         contracturi = _contractURI;
     }
 
-    function contractURI() public view returns (string memory) 
-    {
+    function contractURI() public view returns (string memory) {
         return contracturi;
     }
 
-    function setURI(string memory _newuri) 
-        public
-        onlyRole(URI_SETTER_ROLE) 
-    {
+    function setURI(string memory _newuri) public onlyRole(URI_SETTER_ROLE) {
         _setURI(_newuri);
     }
 
     /**
-   * Override isApprovedForAll to auto-approve OS's proxy contract
-   */
-    function isApprovedForAll(
-        address _owner,
-        address _operator
-    ) public override view returns (bool isOperator) {
+     * Override isApprovedForAll to auto-approve OS's proxy contract
+     */
+    function isApprovedForAll(address _owner, address _operator)
+        public
+        view
+        override
+        returns (bool isOperator)
+    {
         // if OpenSea's ERC1155 Proxy Address is detected, auto-return true
-       if (_operator == OPENSEA_ADDRESS) {
+        if (_operator == OPENSEA_ADDRESS) {
             return true;
         }
         // otherwise, use the default ERC1155.isApprovedForAll()
@@ -259,14 +252,14 @@ contract EmogramsCollectible is
             "This sculpture has already been redeemed"
         );
         require(
-            SRT.balanceOf(msg.sender) >= 33,
+            SRT.balanceOf(msg.sender) >= 33 * 10**SRT.decimals(),
             "Not enough SRT token to redeem"
         );
-        require(redeemedCounter < 3, "All of the 9 sculptures are redeemed");
+        require(redeemedCounter < 3, "All sculptures are redeemed");
 
         redeemAble[_tokenId] = false;
         redeemedCounter += 1;
-        SRT.burnFrom(msg.sender, 9);
+        SRT.burnFrom(msg.sender, 33 * 10**SRT.decimals());
         emit SculptureRedeemed(_tokenId, msg.sender);
     }
 
@@ -275,16 +268,17 @@ contract EmogramsCollectible is
         uint256[] memory _ids,
         address deployer
     ) public onlyRole(MINTER_ROLE) {
-
-        require(_owners.length == _ids.length, "Length of owner addresses is not equal to ids");
+        require(
+            _owners.length == _ids.length,
+            "Length of owner addresses is not equal to ids"
+        );
         require(_ids.length == 99, "Not enough Emograms to migrate");
 
-        for(uint i = 0; i <= _ids.length; i++) {
-
-            if(_owners[i] != deployer && _owners[i] != address(0)) {
-                _safeTransferFrom(deployer, _owners[i-2], _ids[i-2], 1, "");
-                emit MigratedToPolygon(_owners[i-2], _ids[i-2]);
-                }
+        for (uint256 i = 0; i <= _ids.length; i++) {
+            if (_owners[i] != deployer && _owners[i] != address(0)) {
+                _safeTransferFrom(deployer, _owners[i - 2], _ids[i - 2], 1, "");
+                emit MigratedToPolygon(_owners[i - 2], _ids[i - 2]);
+            }
         }
 
         emit PolygonMigration();
