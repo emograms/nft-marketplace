@@ -54,11 +54,14 @@ def test_deploy():
     emogram_constructor = {
         "_beneficiary": accounts[5],
         "_fee": 750,
-        "_SRT": SRToken.address}
+        "_SRT": SRToken.address,
+        "_OPENSEA": "0x207Fa8Df3a17D96Ca7EA4f2893fcdCb78a304101"
+    }
     emograms = EmogramsCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
         emogram_constructor['_SRT'],
+        emogram_constructor['_OPENSEA'],
         {'from': accounts[0], 'gas_price': gas_price})
 
     # Distribute some wETH
@@ -299,6 +302,7 @@ def test_fixed_buy():
 
     assert wETH.balanceOf(accounts[1]) == account_1_final
     assert wETH.balanceOf(accounts[2]) == buyer_init_balance - sell_price
+    assert False
 
 
 def test_auction_cancel():
@@ -325,7 +329,8 @@ def test_auction_cancel():
     assert tx_create.events['AuctionCreated']['seller'] == accounts[0]
     assert tx_create.events['AuctionCreated']['tokenAddress'] == emograms
     assert tx_create.events['AuctionCreated']['startPrice'] == start_price
-    assert (tx_create.events['AuctionCreated']['duration'] == timestamp+duration)
+    assert (tx_create.events['AuctionCreated']
+            ['duration'] == timestamp+duration)
 
     # Testing a cancel from another account
     try:
@@ -547,11 +552,14 @@ def test_proxy_deploy():
     emogram_constructor = {
         "_beneficiary": accounts[5],
         "_fee": 750,
-        "_SRT": SRToken.address}
+        "_SRT": SRToken.address,
+        "_OPENSEA": "0x207Fa8Df3a17D96Ca7EA4f2893fcdCb78a304101"
+    }
     emograms = EmogramsCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
         emogram_constructor['_SRT'],
+        emogram_constructor['_OPENSEA'],
         {'from': accounts[0], 'gas_price': gas_price})
     marketplace_encoded_init_function = encode_function_data(True)
     proxy = ERC1967Proxy.deploy(
@@ -591,11 +599,14 @@ def test_proxy_upgrade():
     emogram_constructor = {
         "_beneficiary": accounts[5],
         "_fee": 750,
-        "_SRT": SRToken.address}
+        "_SRT": SRToken.address,
+        "_OPENSEA": "0x207Fa8Df3a17D96Ca7EA4f2893fcdCb78a304101"
+    }
     emograms = EmogramsCollectible.deploy(
         emogram_constructor['_beneficiary'],
         emogram_constructor['_fee'],
         emogram_constructor['_SRT'],
+        emogram_constructor['_OPENSEA'],
         {'from': accounts[0], 'gas_price': gas_price})
 
     marketplace_encoded_init_function = encode_function_data(True)
