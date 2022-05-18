@@ -21,7 +21,7 @@ IPFS_BASEURI = 'https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9
 #IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 #ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2, 101)]
 AMOUNT = 133
-OWNERS_JSON = "mainnet_export.json"
+OWNERS_JSON = "scripts/mainnet_export_test.json"
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
 uriString = '{"name": "Emograms", "description": "Emogram Test Description", "image": "https://cloudflare-ipfs.com/ipfs/QmSswWZAs1TMKv9GBEWjZKfdAU4JgF6iJJP6Lu6RHkxQ4G", "external_link": "https://nft.emograms.com/about", "seller_fee_basis_points": 750, "fee_recipient": "0xb501ec584f99BD7fa536A8a83ebCf413282193eb"}'
@@ -222,7 +222,7 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     with open(OWNERS_JSON, 'r') as owners_file:
         owners_data = json.load(owners_file)
         for x in range(2,101):
-            owners.append(owners_data['NFTOwners'][x])
+            owners.append(owners_data['NFTOwners'][str(x)])
             ids.append(x)
         
 
