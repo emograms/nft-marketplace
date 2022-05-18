@@ -214,11 +214,6 @@ contract EmogramMarketplaceUpgradeable is
         weth = IERC20(_weth);
     }
 
-    function setWETH(address _weth) public onlyRole(DEFAULT_ADMIN_ROLE) {
-
-        weth = IERC20(_weth);
-    }
-
     // Add new founders
     function addFounder(address _newFounder)
         public
