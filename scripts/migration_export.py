@@ -24,7 +24,7 @@ def main():
 
     # Get NFTs
     print('NFT export started...')
-    for i in range(maxEmogramNum):
+    for i in range(2,101):
         emogramsTokenOwners[i] = emograms.ownerOfById(i)
     print('NFT export finished!')
 

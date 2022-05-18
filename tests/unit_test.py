@@ -302,7 +302,6 @@ def test_fixed_buy():
 
     assert wETH.balanceOf(accounts[1]) == account_1_final
     assert wETH.balanceOf(accounts[2]) == buyer_init_balance - sell_price
-    assert False
 
 
 def test_auction_cancel():
@@ -453,7 +452,7 @@ def test_auction_buy_finish():
     assert tx_bid_2_1.events['BidPlaced']['bid'] == bid_price_2
 
     # Check if the auction can be finished before endDate
-    chain.mine(timestamp=current_time + auction_time + 1)
+    chain.mine(timestamp=current_time + auction_time + 2)
 
     # Wait for endDate and finish auctions
     tx_finish_bid = marketplace.finishAuction(

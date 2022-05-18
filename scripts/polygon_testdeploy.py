@@ -1,7 +1,7 @@
 from brownie import Contract
 from brownie.network import gas_price, priority_fee
 from brownie.network.gas.strategies import GasNowStrategy
-from brownie import TestCollectible, EmogramsCollectible, accounts, network
+from brownie import EmogramMarketplaceUpgradeable, ERC1967Proxy, EmogramsCollectible, SculptureRedemptionToken, accounts, network
 import brownie
 import time
 import eth_utils
@@ -20,6 +20,8 @@ IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEn
 IPFS_BASEURI = 'https://cloudflare-ipfs.com/ipfs/QmQzJt2ZzPaGhEaC3PFXrHMrFaxppz9TUEnUsDRh41jXWb/'
 #IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 #ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2, 101)]
+AMOUNT = 133
+OWNERS_JSON = "mainnet_export.json"
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
 uriString = '{"name": "Emograms", "description": "Emogram Test Description", "image": "https://cloudflare-ipfs.com/ipfs/QmSswWZAs1TMKv9GBEWjZKfdAU4JgF6iJJP6Lu6RHkxQ4G", "external_link": "https://nft.emograms.com/about", "seller_fee_basis_points": 750, "fee_recipient": "0xb501ec584f99BD7fa536A8a83ebCf413282193eb"}'
@@ -170,17 +172,38 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
         emogram_constructor['_SRT'],
         emogram_constructor['_OPENSEA'],
         tx_params, publish_source=publishSource)
+    
+    marketplace = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
+    marketplace_encoded_init_function = encode_function_data(True)
+    proxy = ERC1967Proxy.deploy(
+        marketplace, marketplace_encoded_init_function, tx_params, publish_source=publishSource)
+    marketplace_proxy = Contract.from_abi(
+        "EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
+    marketplace_proxy.initialize(testMode, WETH, tx_params)
+    srt = SculptureRedemptionToken.deploy(tx_params, publish_source=publishSource)
 
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
+    print("Marketplace deployed at:", marketplace.address)
+    print("Proxy deployed at:", proxy.address)
+    print("SRT deployed at", srt.address)
 
-    print("minting emograms\n")
+    #MINTING TOKENS
+    print("minting emograms...\n")
 
     mint_token_ids = list(range(2, 101))
     mint_amounts = [1 for i in range(99)]
     emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", tx_params)
-
     print("Emograms minted!\n")
+
+    print("minting SRT tokens...\n")
+
+    srt.mint(DEPLOYER, AMOUNT, tx_params)
+
+    print("SRT amount minted:", AMOUNT)
+    print("SRT minted to:", DEPLOYER)
+    print("SRT tokens minted!\n")
+
     print("Setting URI\n")
 
     emograms.setContractURI(uriString, tx_params)
@@ -189,6 +212,36 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("URI set!\n")
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
+    print("Marketplace deployed at:", marketplace.address)
+    print("Proxy deployed at:", proxy.address)
+    print("SRT deployed at", srt.address)
+
+    #GETTING OWNER ADDRESSES
+    ids = []
+    owners = []
+    with open(OWNERS_JSON, 'r') as owners_file:
+        owners_data = json.load(owners_file)
+        for x in range(2,101):
+            owners.append(owners_data['NFTOwners'][x])
+            ids.append(x)
+        
+
+    #RUNNING MIGRATE TRANSACTION
+    emograms.polygonMigrate(owners, ids, DEPLOYER, tx_params)
+
+    #PRINT FINAL RESULTS
+    print("Emograms Migrated! Don't forget to burn old tokens on ethereum mainnet!\n")
+    print("Contracts deployed on:", network.show_active())
+    print("Emograms deployed at:", emograms.address)
+    print("Marketplace deployed at:", marketplace.address)
+    print("Proxy deployed at:", proxy.address)
+    print("SRT deployed at", srt.address)
+    print("SRT amount minted:", AMOUNT)
+    print("SRT minted to:", DEPLOYER)
+    print("Migrated emogram ids:", ids)
+    print("Migrated emogram owners", owners)
+
+    print("Script Finished!\n")
 
     return emograms
 
