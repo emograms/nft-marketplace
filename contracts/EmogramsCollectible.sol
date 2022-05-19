@@ -272,10 +272,12 @@ contract EmogramsCollectible is
             _owners.length == _ids.length,
             "Length of owner addresses is not equal to ids"
         );
-        for (uint256 i = 0; i <= _ids.length; i++) {
-            if (_owners[i] != _deployer && _owners[i] != address(0)) {
-                _safeTransferFrom(_deployer, _owners[i], _ids[i], 1, "");
-                emit MigratedToPolygon(_owners[i], _ids[i]);
+        for (uint256 i = 0; i < _ids.length; i++) {
+           address owner = _owners[i];
+           uint256 id = _ids[i];
+            if (owner != _deployer && owner != address(0)) {
+                _safeTransferFrom(_deployer, owner, id, 1, "");
+                emit MigratedToPolygon(owner, id);
             }
         }
 

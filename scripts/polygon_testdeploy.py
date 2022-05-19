@@ -225,7 +225,6 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
             owners.append(owners_data['NFTOwners'][str(x)])
             ids.append(x)
         
-
     #RUNNING MIGRATE TRANSACTION
     emograms.polygonMigrate(owners, ids, DEPLOYER, tx_params)
 
@@ -238,8 +237,6 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("SRT deployed at", srt.address)
     print("SRT amount minted:", AMOUNT)
     print("SRT minted to:", DEPLOYER)
-    print("Migrated emogram ids:", ids)
-    print("Migrated emogram owners", owners)
 
     print("Script Finished!\n")
 
