@@ -12,6 +12,7 @@ import time
 import os
 def clear(): return os.system('clear')
 
+
 clear()
 print(network.show_active() + "\n")
 
@@ -153,18 +154,18 @@ def encode_function_data(initializer=None, *args):
 
 # DEPLOYMENT
 
+
 def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     # Deploying contracts
     print("Current network: ", network.show_active(), "\n")
-
 
     emogram_constructor = {
         "_beneficiary": DEPLOYER,
         "_fee": 750,
         "_SRT": "0x39ffa5550E30993FA255883D7891Eac259C91F26",
         "_OPENSEA": "0x207Fa8Df3a17D96Ca7EA4f2893fcdCb78a304101"
-        }
+    }
 
     emograms = EmogramsCollectible.deploy(
         emogram_constructor['_beneficiary'],
@@ -172,15 +173,17 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
         emogram_constructor['_SRT'],
         emogram_constructor['_OPENSEA'],
         tx_params, publish_source=publishSource)
-    
-    marketplace = EmogramMarketplaceUpgradeable.deploy(tx_params, publish_source=publishSource)
+
+    marketplace = EmogramMarketplaceUpgradeable.deploy(
+        tx_params, publish_source=publishSource)
     marketplace_encoded_init_function = encode_function_data(True)
     proxy = ERC1967Proxy.deploy(
         marketplace, marketplace_encoded_init_function, tx_params, publish_source=publishSource)
     marketplace_proxy = Contract.from_abi(
         "EmogramMarketplaceUpgradeable", proxy.address, EmogramMarketplaceUpgradeable.abi)
     marketplace_proxy.initialize(testMode, WETH, tx_params)
-    srt = SculptureRedemptionToken.deploy(tx_params, publish_source=publishSource)
+    srt = SculptureRedemptionToken.deploy(
+        tx_params, publish_source=publishSource)
 
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
@@ -188,7 +191,7 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Proxy deployed at:", proxy.address)
     print("SRT deployed at", srt.address)
 
-    #MINTING TOKENS
+    # MINTING TOKENS
     print("minting emograms...\n")
 
     mint_token_ids = list(range(2, 101))
@@ -196,9 +199,9 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     emograms.mintBatch(DEPLOYER, mint_token_ids, mint_amounts, "", tx_params)
     print("Emograms minted!\n")
 
-    print("minting SRT tokens...\n")
-
-    srt.mint(DEPLOYER, AMOUNT, tx_params)
+    # Do not mint as its already done in SRT constructor
+    #print("minting SRT tokens...\n")
+    #srt.mint(DEPLOYER, AMOUNT, tx_params)
 
     print("SRT amount minted:", AMOUNT)
     print("SRT minted to:", DEPLOYER)
@@ -216,19 +219,19 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
     print("Proxy deployed at:", proxy.address)
     print("SRT deployed at", srt.address)
 
-    #GETTING OWNER ADDRESSES
+    # GETTING OWNER ADDRESSES
     ids = []
     owners = []
     with open(OWNERS_JSON, 'r') as owners_file:
         owners_data = json.load(owners_file)
-        for x in range(2,101):
+        for x in range(2, 101):
             owners.append(owners_data['NFTOwners'][str(x)])
             ids.append(x)
-        
-    #RUNNING MIGRATE TRANSACTION
+
+    # RUNNING MIGRATE TRANSACTION
     emograms.polygonMigrate(owners, ids, DEPLOYER, tx_params)
 
-    #PRINT FINAL RESULTS
+    # PRINT FINAL RESULTS
     print("Emograms Migrated! Don't forget to burn old tokens on ethereum mainnet!\n")
     print("Contracts deployed on:", network.show_active())
     print("Emograms deployed at:", emograms.address)
@@ -242,9 +245,11 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
 
     return emograms
 
+
 def killContract(emorams):
 
-    kill = input("Do you want to burn the tokens and kill the contract? (1/0) \n")
+    kill = input(
+        "Do you want to burn the tokens and kill the contract? (1/0) \n")
 
     if kill == '1':
         burn_token_ids = list(range(2, 101))
@@ -262,7 +267,8 @@ def killContract(emorams):
     else:
         pass
 
+
 def main():
     set_gas()
     emograms = deploy_network()
-    #killContract(emograms)
+    # killContract(emograms)

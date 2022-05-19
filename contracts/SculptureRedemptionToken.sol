@@ -11,7 +11,8 @@ contract SculptureRedemptionToken is ERC20, ERC20Burnable, AccessControl {
     constructor() ERC20("SculptureRedemptionToken", "SRT") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _mint(msg.sender, 99 * 10**decimals());
+        // Mint 99 for emogram owners and 33 for LP
+        _mint(msg.sender, 132 * 10**decimals());
     }
 
     function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
