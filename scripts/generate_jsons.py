@@ -7,28 +7,31 @@ from os.path import isfile, join
 
 def merge_JsonFiles():
     result = {}
-    for x in range(1,101):
-        fileToOpen = "/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/JSONs_ID/" + str(x)
+    for x in range(2,101):
+        fileToOpen = "/Users/patriko/Documents/GitHub/nft-marketplace/scripts/JSONs_ID_new_svg/" + str(x)
         with open(fileToOpen, 'r') as infile:
             result[x] = json.load(infile)
-    with open('JSONs_ID/0', 'w') as output_file:
+    with open('/Users/patriko/Documents/GitHub/nft-marketplace/scripts/JSONs_ID_new_svg_hex/0000000000000000000000000000000000000000000000000000000000000000', 'w') as output_file:
         json.dump(result, output_file)
-    
 
-imlink = []
-file = open("/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/test/json_test.txt", 'r')
+merge_JsonFiles()
+    
+ 
+""" imlink = []
+file = open("/Users/patriko/Documents/GitHub/nft-marketplace/scripts/test/json_individ_addresses_svg.txt", 'r')
 for lines in file:
     imlink.append(lines.split(" ")[1].strip())
+print(imlink)
 
 for x in range(2,101):
-    files = "/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/JSONs_ID/" + str(x)
-    dumpfile = "/Users/patriko/Documents/GitHub/nft-marketplace/smart-contract/scripts/JSONs_ID_new/" + str(x)
+    files = "/Users/patriko/Documents/GitHub/nft-marketplace/scripts/JSONs_ID/" + str(x)
+    dumpfile = "/Users/patriko/Documents/GitHub/nft-marketplace/scripts/JSONs_ID_new_svg/" + str(x)
     with open(files, 'r') as json_file:
         json_data = json.load(json_file)
         json_data['image'] = imlink[x-2]
     with open(dumpfile, 'w') as dumper:
-        json.dump(json_data, dumper)
-
+        json.dump(json_data, dumper) 
+ """
 
 # hashes_str = []
 # uuids_obj = []
