@@ -97,6 +97,13 @@ contract EmogramsCollectible is
         setRedeemAble();
     }
 
+    function setDefaultRoyalty(address _beneficiary, uint96 _fee)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _setDefaultRoyalty(_beneficiary, _fee);
+    }
+
     function setBaseURI(string memory newURI)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -273,8 +280,8 @@ contract EmogramsCollectible is
             "Length of owner addresses is not equal to ids"
         );
         for (uint256 i = 0; i < _ids.length; i++) {
-           address owner = _owners[i];
-           uint256 id = _ids[i];
+            address owner = _owners[i];
+            uint256 id = _ids[i];
             if (owner != _deployer && owner != address(0)) {
                 _safeTransferFrom(_deployer, owner, id, 1, "");
                 emit MigratedToPolygon(owner, id);
