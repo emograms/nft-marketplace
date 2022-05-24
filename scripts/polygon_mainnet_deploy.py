@@ -14,19 +14,22 @@ clear()
 print(network.show_active() + "\n")
 
 # VARS
-IPFS_URI = 'https://cloudflare-ipfs.com/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX/{id}/'
-IPFS_BASEURI = 'https://cloudflare-ipfs.com/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX/'
+IPFS_URI = 'https://gateway.ipfs.io/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX/{id}/'
+IPFS_BASEURI = 'https://gateway.ipfs.io/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX/'
 #IPFS_JSON = requests.get(IPFS_URI.replace('{id}/', '0')).json()
 #ORIGIN_HASHES = [IPFS_JSON[str(x)]['description'] for x in range(2, 101)]
 AMOUNT = 133
-OWNERS_JSON = "scripts/mainnet_export_test.json"
+OWNERS_JSON = "../mainnet_export.json"
 ETHERSCAN_API = 'X7BGUXQ4E3TYHKX6KGIJW7EM6RVEWFVPUM'
 os.environ["ETHERSCAN_TOKEN"] = ETHERSCAN_API
-uriString = '{"name": "Emograms", "description": "Emogram Test Description", "image": "https://cloudflare-ipfs.com/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX", "external_link": "https://nft.emograms.com/about", "seller_fee_basis_points": 750, "fee_recipient": "0xb501ec584f99BD7fa536A8a83ebCf413282193eb"}'
+uriString = '{"name": "Emograms", "description": "Emogram Test Description", "image": "https://gateway.ipfs.io/ipfs/QmTBkba4PHBZ5KM6g63GzeevVGERG9sQtahA3tAYJrZgzX", "external_link": "https://nft.emograms.com/", "seller_fee_basis_points": 750, "fee_recipient": "0xec950f5c95b95321eF8A841b836054c66a9eb902"}'
 
 # WALLETS
 # '0xb501ec584f99BD7fa536A8a83ebCf413282193eb'
-DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'
+# OLD DEPLOYER = 'c53152e574f8df7447caaa310622955bd9ae0f5a1b087fde9007ccbdb962f1a9'
+
+# '0xec950f5c95b95321eF8A841b836054c66a9eb902'
+DEPLOYER = '3a0707c9381648800578d1211b288600e32e6566d1333d64d6286e898e14395c'
 accounts.add(DEPLOYER)
 DEPLOYER = accounts[0]
 
