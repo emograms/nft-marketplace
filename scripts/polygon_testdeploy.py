@@ -226,7 +226,7 @@ def deploy_network(testMode=True, publishSource=True, saveJSON=True):
         owners_data = json.load(owners_file)
         for x in range(2, 101):
             owners.append(owners_data['NFTOwners'][str(x)])
-            ids.append(x)
+            ids.append(x)        
 
     # RUNNING MIGRATE TRANSACTION
     emograms.polygonMigrate(owners, ids, DEPLOYER, tx_params)
