@@ -99,7 +99,7 @@ contract EmogramsCollectible is
 
     function setDefaultRoyalty(address _beneficiary, uint96 _fee)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(BENEFICIARY_UPGRADER_ROLE)
     {
         _setDefaultRoyalty(_beneficiary, _fee);
     }
