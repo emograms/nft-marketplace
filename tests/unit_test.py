@@ -4,16 +4,11 @@ TODO:
 -SRT contract balanbce check
 -check if marketplace wETH balances are correct
 """
-
-import time
-import random
-from os import initgroups
+import json
 import eth_utils
 from brownie import *
 import uuid
 import hashlib
-from hexbytes import HexBytes
-from brownie.network.gas.strategies import GasNowStrategy
 
 gas_price = 100
 
@@ -664,6 +659,34 @@ def test_originality_test():
         assert returned_value == True
 
 
+def test_polygonMigrate():
+    marketplace, SRToken, wETH, emograms = test_deploy()
+
+    mint_token_ids = list(range(2, 101))
+    emograms.mintBatch(accounts[0], mint_token_ids, [
+                       1 for x in mint_token_ids], "",
+                       {'from': accounts[0], 'gas_price': gas_price})
+
+    emograms.setApprovalForAll(
+        marketplace, True, {'from': accounts[0], 'gas_price': gas_price})
+    emograms.setApprovalForAll(
+        marketplace, True, {'from': accounts[1], 'gas_price': gas_price})
+
+    # GETTING OWNER ADDRESSES
+    OWNERS_JSON = "mainnet_export.json"
+    ids = []
+    owners = []
+    with open(OWNERS_JSON, 'r') as owners_file:
+        owners_data = json.load(owners_file)
+        for x in range(2, 101):
+            owners.append(owners_data['NFTOwners'][str(x)])
+            ids.append(x)
+
+    # RUNNING MIGRATE TRANSACTION
+    emograms.polygonMigrate(owners, ids, accounts[0], {
+                            'from': accounts[0], 'gas_price': gas_price})
+    for o, i in zip(owners, ids):
+        assert emograms.ownerOfById(i) == o
 # '''
 # Todo:
 # - test erc1155 trasnfer from foundervault after closed auction with no bid

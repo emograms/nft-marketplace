@@ -283,7 +283,7 @@ contract EmogramsCollectible is
             address owner = _owners[i];
             uint256 id = _ids[i];
             if (owner != _deployer && owner != address(0)) {
-                _safeTransferFrom(_deployer, owner, id, 1, "");
+                safeTransferFrom(_deployer, owner, id, 1, "");
                 emit MigratedToPolygon(owner, id);
             }
         }
