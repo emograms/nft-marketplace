@@ -1,10 +1,11 @@
 import scripts.polygon_mainnet_deploy as d
 import json
 
-with open('latest_deployment.json', 'r') as deployments:
+with open('../latest_deployment.json', 'r') as deployments:
     addresses = json.load(deployments)
     marketplace_proxy_address = addresses['polygon-main']['PROXY']
     emograms_address = addresses['polygon-main']['EMOGRAMSCOLLECTIBLE']
+    marketplace_address = addresses['polygon-main']['EMOGRAMMARKETPLACEUPGRADEABLE']
     DEPLOYER = '3365973dff537bf0899c163c867787afdbb5d368bea82d03d1d0fb299e53d15a'
     d.accounts.add(DEPLOYER)
     #  As there is already an account added in the script imported above, so I take the last element added
@@ -22,9 +23,9 @@ def main():
     # Starting init
     start = input("Ready to start (y/n)")
     if start == 'y':
-        marketplace = d.EmogramMarketplaceUpgradeable.at(
-            marketplace_proxy_address)
         emograms = d.EmogramsCollectible.at(emograms_address)
+        marketplace = d.Contract.from_explorer(marketplace_proxy_address, as_proxy_for=marketplace_address)
+        
 
         # Fetch emograms to sell
         tokenIds = []
