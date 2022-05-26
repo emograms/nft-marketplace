@@ -15,13 +15,18 @@ with open('latest_deployment.json', 'r') as deployments:
 
 
 def main():
+    # Setting gas fees
     d.set_gas(DEPLOYER)
+    print('Transaction parameters to use:', d.tx_params)
+
+    # Starting init
     start = input("Ready to start (y/n)")
     if start == 'y':
         marketplace = d.EmogramMarketplaceUpgradeable.at(
             marketplace_proxy_address)
         emograms = d.EmogramsCollectible.at(emograms_address)
 
+        # Fetch emograms to sell
         tokenIds = []
         for id in range(2, 101):
             owner = emograms.ownerOfById(id)
@@ -30,7 +35,18 @@ def main():
                 tokenIds.append(id)
 
         # Iterate over sell
+        print('List of emograms to put up on sale:')
+        print(tokenIds)
         start = input("Ready to start sell transactions? (y/n)")
-        for id in tokenIds:
-            print(id, 1e18, d.tx_params)
-            # tx_sell = marketplace.addEmogramToMarket(id, emograms, 1e18, d.tx_params)
+        for idx, id in enumerate(tokenIds):
+            if idx < 3:
+                x = input(f"{id}, 1e18, {d.tx_params}, \n")
+                tx_sell = marketplace.addEmogramToMarket(
+                    id, emograms, 1e18, d.tx_params)
+            else:
+                #  Avoid confirming transactions
+                d.tx_params['required_confs'] = 0
+                print(id, 1e18, d.tx_params)
+                tx_sell = marketplace.addEmogramToMarket(
+                    id, emograms, 1e18, d.tx_params)
+                print(tx_sell)
