@@ -40,7 +40,7 @@ print('\n----- Deployment script loaded -----')
 print("Active Network: ")
 print(network.show_active() + "\n")
 
-if network.show_active() == 'polygon-mainnet' or network.show_active() == 'mainnet':
+if network.show_active() == 'polygon-main' or network.show_active() == 'mainnet':
     print("ATTENTION: YOPU ARE DEPLOYING TO POLYGON MAINNET")
 
 print('Wallet addreses used:')
@@ -48,7 +48,7 @@ print('DEPLOYER:', DEPLOYER)
 print('\nUse set_gas() before interacting!')
 
 
-def set_gas():
+def set_gas(DEPLOYER):
     '''
     Must be called to set required gas price from interactive mode
     '''
@@ -240,6 +240,6 @@ def killContract(emorams):
 
 
 def main():
-    set_gas()
+    set_gas(DEPLOYER)
     emograms = deploy_network()
     # killContract(emograms)
